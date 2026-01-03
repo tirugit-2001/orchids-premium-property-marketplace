@@ -8,8 +8,7 @@ import {
   CheckCircle2,
   XCircle,
   MapPin,
-  IndianRupee,
-  Eye
+  IndianRupee
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'

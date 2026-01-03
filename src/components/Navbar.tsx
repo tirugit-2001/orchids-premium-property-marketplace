@@ -30,6 +30,8 @@ import {
   Plus,
   Bell,
   CreditCard,
+  Shield,
+  ShieldCheck,
 } from 'lucide-react'
 
 export function Navbar() {
@@ -113,7 +115,7 @@ export function Navbar() {
             <div className="hidden lg:flex items-center gap-3">
               {user ? (
                 <>
-                  {hasActiveSubscription() && (
+                  {user.role === 'customer' && hasActiveSubscription() && (
                     <div className="px-3 py-1.5 bg-primary/10 rounded-lg text-sm">
                       <span className="text-muted-foreground">Contacts: </span>
                       <span className="font-semibold text-primary">
@@ -127,6 +129,15 @@ export function Navbar() {
                       <Link href="/dashboard/properties/new">
                         <Plus className="w-4 h-4 mr-2" />
                         List Property
+                      </Link>
+                    </Button>
+                  )}
+
+                  {user.role === 'admin' && (
+                    <Button asChild variant="default" size="sm">
+                      <Link href="/admin">
+                        <Shield className="w-4 h-4 mr-2" />
+                        Admin Panel
                       </Link>
                     </Button>
                   )}
@@ -160,18 +171,52 @@ export function Navbar() {
                           <p className="w-[200px] truncate text-sm text-muted-foreground">
                             {user.email}
                           </p>
-                          <Badge variant="secondary" className="w-fit text-xs capitalize">
+                          <Badge variant="secondary" className={`w-fit text-xs capitalize ${
+                            user.role === 'admin' ? 'bg-primary/10 text-primary' :
+                            user.role === 'owner' ? 'bg-amber-100 text-amber-700' :
+                            ''
+                          }`}>
+                            {user.role === 'admin' && <Shield className="w-3 h-3 mr-1" />}
+                            {user.role === 'owner' && <Building2 className="w-3 h-3 mr-1" />}
                             {user.role}
                           </Badge>
                         </div>
                       </div>
                       <DropdownMenuSeparator />
+                      
+                      {user.role === 'admin' && (
+                        <DropdownMenuItem asChild>
+                          <Link href="/admin">
+                            <Shield className="mr-2 h-4 w-4 text-primary" />
+                            Admin Panel
+                          </Link>
+                        </DropdownMenuItem>
+                      )}
+                      
                       <DropdownMenuItem asChild>
                         <Link href="/dashboard">
                           <LayoutDashboard className="mr-2 h-4 w-4" />
                           Dashboard
                         </Link>
                       </DropdownMenuItem>
+                      
+                      {user.role === 'owner' && (
+                        <>
+                          <DropdownMenuItem asChild>
+                            <Link href="/dashboard/properties">
+                              <Building2 className="mr-2 h-4 w-4" />
+                              My Properties
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link href="/dashboard/verify">
+                              <ShieldCheck className="mr-2 h-4 w-4" />
+                              Verification
+                            </Link>
+                          </DropdownMenuItem>
+                        </>
+                      )}
+                      
                       {user.role === 'customer' && (
                         <>
                           <DropdownMenuItem asChild>
@@ -181,13 +226,14 @@ export function Navbar() {
                             </Link>
                           </DropdownMenuItem>
                           <DropdownMenuItem asChild>
-                            <Link href="/dashboard/subscription">
+                            <Link href="/pricing">
                               <CreditCard className="mr-2 h-4 w-4" />
                               Subscription
                             </Link>
                           </DropdownMenuItem>
                         </>
                       )}
+                      
                       <DropdownMenuItem asChild>
                         <Link href="/dashboard/messages">
                           <MessageSquare className="mr-2 h-4 w-4" />
@@ -292,6 +338,16 @@ export function Navbar() {
                 <div className="border-t my-4" />
                 {user ? (
                   <>
+                    {user.role === 'admin' && (
+                      <Link
+                        href="/admin"
+                        className="flex items-center gap-3 px-4 py-3 rounded-lg bg-primary/10 text-primary font-medium"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <Shield className="w-5 h-5" />
+                        Admin Panel
+                      </Link>
+                    )}
                     <Link
                       href="/dashboard"
                       className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-muted"
@@ -300,6 +356,26 @@ export function Navbar() {
                       <LayoutDashboard className="w-5 h-5" />
                       Dashboard
                     </Link>
+                    {user.role === 'owner' && (
+                      <Link
+                        href="/dashboard/properties"
+                        className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-muted"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <Building2 className="w-5 h-5" />
+                        My Properties
+                      </Link>
+                    )}
+                    {user.role === 'customer' && (
+                      <Link
+                        href="/dashboard/favorites"
+                        className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-muted"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <Heart className="w-5 h-5" />
+                        Favorites
+                      </Link>
+                    )}
                     <Link
                       href="/dashboard/messages"
                       className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-muted"

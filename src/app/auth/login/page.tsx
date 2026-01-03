@@ -75,7 +75,12 @@ export default function LoginPage() {
       }
 
       toast.success('Welcome back!')
-      router.push('/dashboard')
+      
+      if (profile.role === 'admin') {
+        router.push('/admin')
+      } else {
+        router.push('/dashboard')
+      }
     } catch (error: unknown) {
       const err = error as Error
       toast.error(err.message || 'Failed to sign in')

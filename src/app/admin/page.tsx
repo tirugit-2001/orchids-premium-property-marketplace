@@ -7,9 +7,7 @@ import {
   Building2, 
   CheckCircle2, 
   TrendingUp,
-  Activity,
-  ArrowUpRight,
-  Clock
+  Activity
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -95,25 +93,22 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <Card className="bg-white border-slate-200 shadow-sm">
           <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2 text-slate-900">
-              <Clock className="w-5 h-5 text-primary" />
-              Quick Actions
-            </CardTitle>
+            <CardTitle className="text-lg text-slate-900">Quick Actions</CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-2 gap-4">
-            <Link href="/admin/verify" className="p-4 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors text-left group border border-slate-200">
+            <Link href="/admin/verify" className="p-4 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors text-left border border-slate-200">
               <p className="text-sm font-medium text-slate-900">Review Owners</p>
               <p className="text-xs text-slate-500 mt-1">Check pending verifications</p>
             </Link>
-            <Link href="/admin/properties" className="p-4 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors text-left group border border-slate-200">
+            <Link href="/admin/properties" className="p-4 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors text-left border border-slate-200">
               <p className="text-sm font-medium text-slate-900">Moderate Listings</p>
               <p className="text-xs text-slate-500 mt-1">Approve new properties</p>
             </Link>
-            <Link href="/admin/users" className="p-4 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors text-left group border border-slate-200">
+            <Link href="/admin/users" className="p-4 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors text-left border border-slate-200">
               <p className="text-sm font-medium text-slate-900">Manage Users</p>
               <p className="text-xs text-slate-500 mt-1">View and edit user roles</p>
             </Link>
-            <Link href="/" className="p-4 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors text-left group border border-slate-200">
+            <Link href="/" className="p-4 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors text-left border border-slate-200">
               <p className="text-sm font-medium text-slate-900">View Site</p>
               <p className="text-xs text-slate-500 mt-1">See the public website</p>
             </Link>
@@ -122,10 +117,7 @@ export default function AdminDashboard() {
 
         <Card className="bg-white border-slate-200 shadow-sm">
           <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2 text-slate-900">
-              <Activity className="w-5 h-5 text-primary" />
-              Platform Stats
-            </CardTitle>
+            <CardTitle className="text-lg text-slate-900">Platform Stats</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">

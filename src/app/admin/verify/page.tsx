@@ -5,7 +5,6 @@ import {
   CheckCircle2, 
   XCircle, 
   User, 
-  FileText,
   Clock,
   ShieldCheck
 } from 'lucide-react'

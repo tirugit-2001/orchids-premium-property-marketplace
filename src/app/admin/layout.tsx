@@ -8,11 +8,11 @@ import {
   Users, 
   Building2, 
   CheckCircle2, 
-  Settings, 
   LogOut,
   Menu,
   X,
-  ShieldCheck
+  ShieldCheck,
+  Home
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -129,7 +129,7 @@ export default function AdminLayout({
               href="/"
               className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 mb-2"
             >
-              <Building2 className="w-5 h-5" />
+              <Home className="w-5 h-5" />
               View Site
             </Link>
             <Button

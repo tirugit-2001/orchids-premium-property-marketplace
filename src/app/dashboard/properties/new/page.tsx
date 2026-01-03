@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useForm } from 'react-hook-form'
@@ -37,6 +37,7 @@ import {
   IndianRupee,
   Image as ImageIcon,
   Loader2,
+  ShieldCheck,
 } from 'lucide-react'
 
 const propertyTypes = [
@@ -98,6 +99,41 @@ export default function NewPropertyPage() {
   const [currentStep, setCurrentStep] = useState(1)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([])
+  const [verificationLoading, setVerificationLoading] = useState(true)
+  const [isVerified, setIsVerified] = useState(false)
+  const [userRole, setUserRole] = useState<string | null>(null)
+
+  useEffect(() => {
+    async function checkVerification() {
+      const supabase = createClient()
+      const { data: { user: authUser } } = await supabase.auth.getUser()
+      
+      if (!authUser) {
+        router.push('/auth/login')
+        return
+      }
+
+      const { data } = await supabase
+        .from('profiles')
+        .select('is_verified, role')
+        .eq('id', authUser.id)
+        .single()
+
+      setUserRole(data?.role || null)
+      
+      if (data?.role === 'admin') {
+        setIsVerified(true)
+      } else if (data?.role === 'owner') {
+        setIsVerified(!!data?.is_verified)
+      } else {
+        router.push('/dashboard')
+        return
+      }
+      setVerificationLoading(false)
+    }
+
+    checkVerification()
+  }, [router])
 
   const {
     register,
@@ -160,6 +196,39 @@ export default function NewPropertyPage() {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1)
     }
+  }
+
+  if (verificationLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    )
+  }
+
+  if (!isVerified) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="pt-24 px-4 max-w-2xl mx-auto text-center">
+          <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <ShieldCheck className="w-10 h-10 text-amber-600" />
+          </div>
+          <h1 className="text-3xl font-bold mb-4">Verification Required</h1>
+          <p className="text-muted-foreground text-lg mb-8">
+            To maintain a high-quality marketplace, property owners must be verified by our team before listing properties.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Button size="lg" onClick={() => router.push('/dashboard/verify')}>
+              Get Verified Now
+            </Button>
+            <Button variant="ghost" size="lg" onClick={() => router.push('/dashboard')}>
+              Return to Dashboard
+            </Button>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (

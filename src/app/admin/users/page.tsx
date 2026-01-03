@@ -9,7 +9,6 @@ import {
   User as UserIcon,
   Mail,
   Calendar,
-  ShieldAlert,
   CheckCircle2
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
