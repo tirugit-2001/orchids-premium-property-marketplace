@@ -1,4 +1,5 @@
 export type UserRole = 'customer' | 'owner' | 'admin'
+export type VerificationStatus = 'pending' | 'verified' | 'rejected' | null
 
 export interface Profile {
   id: string
@@ -8,6 +9,9 @@ export interface Profile {
   avatar_url: string | null
   role: UserRole
   is_verified: boolean
+  verification_status: VerificationStatus
+  verification_documents: string[] | null
+  verification_rejection_reason: string | null
   whatsapp_number: string | null
   bio: string | null
   company_name: string | null
@@ -58,6 +62,7 @@ export interface Property {
   longitude: number | null
   amenities: string[]
   images: string[]
+  images_360: string[]
   video_url: string | null
   virtual_tour_url: string | null
   is_verified: boolean

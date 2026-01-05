@@ -49,21 +49,31 @@ export function VisitScheduler({ propertyId, ownerId }: VisitSchedulerProps) {
 
     setIsSubmitting(true)
     try {
-      // In a real app, this would be an API call
-      // const response = await fetch('/api/visits', {
-      //   method: 'POST',
-      //   body: JSON.stringify({ propertyId, ownerId, date, time, notes })
-      // })
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500))
-      
+      const response = await fetch('/api/visits', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          property_id: propertyId,
+          owner_id: ownerId,
+          preferred_date: date.toISOString().split('T')[0],
+          preferred_time: time,
+          notes: notes || null,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to schedule visit')
+      }
+
       toast.success('Visit scheduled successfully! The owner will be notified.')
       setDate(undefined)
       setTime(undefined)
       setNotes('')
-    } catch (error) {
-      toast.error('Failed to schedule visit. Please try again.')
+    } catch (error: any) {
+      console.error('Schedule visit error:', error)
+      toast.error(error.message || 'Failed to schedule visit. Please try again.')
     } finally {
       setIsSubmitting(false)
     }

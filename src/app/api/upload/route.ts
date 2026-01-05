@@ -17,9 +17,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'File and user_id required' }, { status: 400 })
     }
 
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
-    if (!allowedTypes.includes(file.type)) {
-      return NextResponse.json({ error: 'Invalid file type. Allowed: JPEG, PNG, WebP, GIF' }, { status: 400 })
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/x-exr', 'image/exr']
+    const allowedExtensions = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'exr']
+    const fileExt = file.name.split('.').pop()?.toLowerCase()
+    
+    // Check MIME type or file extension (for .exr which might not have proper MIME type)
+    if (!allowedTypes.includes(file.type) && !(fileExt && allowedExtensions.includes(fileExt))) {
+      return NextResponse.json({ 
+        error: 'Invalid file type. Allowed: JPEG, PNG, WebP, GIF, EXR. Note: EXR files may need conversion for web display.' 
+      }, { status: 400 })
+    }
+    
+    // For EXR files, use a generic image MIME type or the detected extension
+    let contentType = file.type
+    if (fileExt === 'exr' && !contentType) {
+      contentType = 'image/x-exr'
     }
 
     const maxSize = 10 * 1024 * 1024
@@ -27,7 +39,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'File too large. Maximum 10MB allowed' }, { status: 400 })
     }
 
-    const fileExt = file.name.split('.').pop()
+    // Ensure fileExt is defined
+    if (!fileExt) {
+      return NextResponse.json({ error: 'Invalid file name' }, { status: 400 })
+    }
+
     const fileName = `${user_id}/${property_id || 'temp'}/${Date.now()}.${fileExt}`
 
     const arrayBuffer = await file.arrayBuffer()
@@ -36,7 +52,7 @@ export async function POST(request: NextRequest) {
     const { data, error } = await supabase.storage
       .from('property-images')
       .upload(fileName, buffer, {
-        contentType: file.type,
+        contentType: contentType || file.type,
         upsert: false
       })
 

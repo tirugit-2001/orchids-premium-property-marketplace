@@ -1,27 +1,46 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { createClient as createServerClient } from '@/lib/supabase/server'
 
-const supabase = createClient(
+const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
 export async function POST(request: NextRequest) {
   try {
-    const { property_id, user_id } = await request.json()
-
-    if (!property_id || !user_id) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+    const supabase = await createServerClient()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { data: existingReveal } = await supabase
+    const body = await request.json()
+    const { property_id, propertyId } = body
+    const propertyIdValue = property_id || propertyId
+
+    if (!propertyIdValue) {
+      return NextResponse.json({ error: 'Missing required fields: property_id' }, { status: 400 })
+    }
+
+    const user_id = user.id
+
+    const { data: existingReveal } = await supabaseAdmin
       .from('contact_reveals')
-      .select('*, property:properties(owner:profiles(phone, email, whatsapp_number, full_name))')
+      .select('revealed_phone, revealed_email, revealed_whatsapp, owner_id')
       .eq('customer_id', user_id)
-      .eq('property_id', property_id)
+      .eq('property_id', propertyIdValue)
       .single()
 
     if (existingReveal) {
+      // Fetch owner name if needed
+      const { data: ownerProfile } = await supabaseAdmin
+        .from('profiles')
+        .select('full_name')
+        .eq('id', existingReveal.owner_id)
+        .single()
+
       return NextResponse.json({
         success: true,
         already_revealed: true,
@@ -29,12 +48,12 @@ export async function POST(request: NextRequest) {
           phone: existingReveal.revealed_phone,
           email: existingReveal.revealed_email,
           whatsapp: existingReveal.revealed_whatsapp,
-          name: existingReveal.property?.owner?.full_name
+          name: ownerProfile?.full_name || null
         }
       })
     }
 
-    const { data: subscription, error: subError } = await supabase
+    const { data: subscription, error: subError } = await supabaseAdmin
       .from('subscriptions')
       .select('*')
       .eq('user_id', user_id)
@@ -60,26 +79,38 @@ export async function POST(request: NextRequest) {
       }, { status: 403 })
     }
 
-    const { data: property, error: propError } = await supabase
+    const { data: property, error: propError } = await supabaseAdmin
       .from('properties')
-      .select('*, owner:profiles(phone, email, whatsapp_number, full_name)')
-      .eq('id', property_id)
+      .select('owner_id')
+      .eq('id', propertyIdValue)
       .single()
 
     if (propError || !property) {
       return NextResponse.json({ error: 'Property not found' }, { status: 404 })
     }
 
-    const { error: revealError } = await supabase
+    // Fetch owner profile separately
+    const { data: ownerProfile, error: ownerError } = await supabaseAdmin
+      .from('profiles')
+      .select('phone, email, whatsapp_number, full_name')
+      .eq('id', property.owner_id)
+      .single()
+
+    if (ownerError || !ownerProfile) {
+      return NextResponse.json({ error: 'Owner profile not found' }, { status: 404 })
+    }
+
+    const { error: revealError } = await supabaseAdmin
       .from('contact_reveals')
       .insert({
         customer_id: user_id,
-        property_id,
+        property_id: propertyIdValue,
         owner_id: property.owner_id,
         subscription_id: subscription.id,
-        revealed_phone: property.owner?.phone,
-        revealed_email: property.owner?.email,
-        revealed_whatsapp: property.owner?.whatsapp_number
+        revealed_phone: ownerProfile.phone,
+        revealed_email: ownerProfile.email,
+        revealed_whatsapp: ownerProfile.whatsapp_number,
+        revealed_at: new Date().toISOString()
       })
 
     if (revealError) {
@@ -88,24 +119,31 @@ export async function POST(request: NextRequest) {
     }
 
     if (subscription.contacts_limit !== -1) {
-      await supabase
+      await supabaseAdmin
         .from('subscriptions')
         .update({ contacts_used: subscription.contacts_used + 1 })
         .eq('id', subscription.id)
     }
 
-    await supabase
+    // Get current contacts_count before updating
+    const { data: propertyData } = await supabaseAdmin
       .from('properties')
-      .update({ contacts_count: (property.contacts_count || 0) + 1 })
-      .eq('id', property_id)
+      .select('contacts_count')
+      .eq('id', propertyIdValue)
+      .single()
+
+    await supabaseAdmin
+      .from('properties')
+      .update({ contacts_count: (propertyData?.contacts_count || 0) + 1 })
+      .eq('id', propertyIdValue)
 
     return NextResponse.json({
       success: true,
       contact: {
-        phone: property.owner?.phone,
-        email: property.owner?.email,
-        whatsapp: property.owner?.whatsapp_number,
-        name: property.owner?.full_name
+        phone: ownerProfile.phone,
+        email: ownerProfile.email,
+        whatsapp: ownerProfile.whatsapp_number,
+        name: ownerProfile.full_name
       },
       contacts_remaining: subscription.contacts_limit === -1 
         ? -1 
@@ -119,18 +157,24 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
-    const property_id = searchParams.get('property_id')
-    const user_id = searchParams.get('user_id')
-
-    if (!property_id || !user_id) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+    const supabase = await createServerClient()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { data: reveal } = await supabase
+    const { searchParams } = new URL(request.url)
+    const property_id = searchParams.get('property_id')
+
+    if (!property_id) {
+      return NextResponse.json({ error: 'Missing required field: property_id' }, { status: 400 })
+    }
+
+    const { data: reveal } = await supabaseAdmin
       .from('contact_reveals')
       .select('*')
-      .eq('customer_id', user_id)
+      .eq('customer_id', user.id)
       .eq('property_id', property_id)
       .single()
 

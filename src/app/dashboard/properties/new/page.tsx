@@ -1,28 +1,29 @@
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { motion, AnimatePresence } from 'framer-motion'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { Navbar } from '@/components/Navbar'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { Checkbox } from '@/components/ui/checkbox'
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
+import { useForm, type SubmitHandler } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Navbar } from "@/components/Navbar";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { createClient } from '@/lib/supabase/client'
-import { useAuthStore } from '@/lib/store'
-import { toast } from 'sonner'
-import { CITIES, AMENITIES } from '@/lib/types'
+} from "@/components/ui/select";
+import { createClient } from "@/lib/supabase/client";
+import { useAuthStore } from "@/lib/store";
+import { toast } from "sonner";
+import { CITIES, AMENITIES } from "@/lib/types";
 import {
   ArrowLeft,
   ArrowRight,
@@ -38,172 +39,362 @@ import {
   Image as ImageIcon,
   Loader2,
   ShieldCheck,
-} from 'lucide-react'
+  X,
+  Upload,
+  Compass,
+} from "lucide-react";
 
 const propertyTypes = [
-  { id: 'house', label: 'House', icon: Home },
-  { id: 'apartment', label: 'Apartment', icon: Building2 },
-  { id: 'pg', label: 'PG/Hostel', icon: Users },
-  { id: 'land', label: 'Land', icon: LandPlot },
-  { id: 'villa', label: 'Villa', icon: Castle },
-  { id: 'commercial', label: 'Commercial', icon: Store },
-]
+  { id: "house", label: "House", icon: Home },
+  { id: "apartment", label: "Apartment", icon: Building2 },
+  { id: "pg", label: "PG/Hostel", icon: Users },
+  { id: "land", label: "Land", icon: LandPlot },
+  { id: "villa", label: "Villa", icon: Castle },
+  { id: "commercial", label: "Commercial", icon: Store },
+];
 
 const listingTypes = [
-  { id: 'sale', label: 'For Sale' },
-  { id: 'rent', label: 'For Rent' },
-  { id: 'lease', label: 'For Lease' },
-]
+  { id: "sale", label: "For Sale" },
+  { id: "rent", label: "For Rent" },
+  { id: "lease", label: "For Lease" },
+];
 
 const furnishingTypes = [
-  { id: 'unfurnished', label: 'Unfurnished' },
-  { id: 'semi-furnished', label: 'Semi-Furnished' },
-  { id: 'fully-furnished', label: 'Fully Furnished' },
-]
+  { id: "unfurnished", label: "Unfurnished" },
+  { id: "semi-furnished", label: "Semi-Furnished" },
+  { id: "fully-furnished", label: "Fully Furnished" },
+];
 
 const propertySchema = z.object({
-  title: z.string().min(10, 'Title must be at least 10 characters'),
-  description: z.string().min(50, 'Description must be at least 50 characters'),
-  property_type: z.string().min(1, 'Please select property type'),
-  listing_type: z.string().min(1, 'Please select listing type'),
-  price: z.preprocess((val) => (val === '' || val === undefined ? undefined : Number(val)), z.number().min(1, 'Please enter a valid price')),
+  title: z.string().min(10, "Title must be at least 10 characters"),
+  description: z.string().min(50, "Description must be at least 50 characters"),
+  property_type: z.string().min(1, "Please select property type"),
+  listing_type: z.string().min(1, "Please select listing type"),
+  price: z.preprocess(
+    (val) => (val === "" || val === undefined ? undefined : Number(val)),
+    z.number().min(1, "Please enter a valid price")
+  ),
   price_negotiable: z.boolean(),
-  area_sqft: z.preprocess((val) => (val === '' || val === undefined ? undefined : Number(val)), z.number().optional()),
-  bedrooms: z.preprocess((val) => (val === '' || val === undefined ? undefined : Number(val)), z.number().optional()),
-  bathrooms: z.preprocess((val) => (val === '' || val === undefined ? undefined : Number(val)), z.number().optional()),
+  area_sqft: z.preprocess(
+    (val) => (val === "" || val === undefined ? undefined : Number(val)),
+    z.number().optional()
+  ),
+  bedrooms: z.preprocess(
+    (val) => (val === "" || val === undefined ? undefined : Number(val)),
+    z.number().optional()
+  ),
+  bathrooms: z.preprocess(
+    (val) => (val === "" || val === undefined ? undefined : Number(val)),
+    z.number().optional()
+  ),
   furnishing: z.string().optional(),
-  floor_number: z.preprocess((val) => (val === '' || val === undefined ? undefined : Number(val)), z.number().optional()),
-  total_floors: z.preprocess((val) => (val === '' || val === undefined ? undefined : Number(val)), z.number().optional()),
+  floor_number: z.preprocess(
+    (val) => (val === "" || val === undefined ? undefined : Number(val)),
+    z.number().optional()
+  ),
+  total_floors: z.preprocess(
+    (val) => (val === "" || val === undefined ? undefined : Number(val)),
+    z.number().optional()
+  ),
   facing: z.string().optional(),
-  age_of_property: z.preprocess((val) => (val === '' || val === undefined ? undefined : Number(val)), z.number().optional()),
-  address: z.string().min(5, 'Please enter a valid address'),
-  city: z.string().min(1, 'Please select a city'),
-  state: z.string().min(1, 'Please enter state'),
-  pincode: z.string().min(6, 'Please enter a valid pincode'),
+  age_of_property: z.preprocess(
+    (val) => (val === "" || val === undefined ? undefined : Number(val)),
+    z.number().optional()
+  ),
+  address: z.string().min(5, "Please enter a valid address"),
+  city: z.string().min(1, "Please select a city"),
+  state: z.string().min(1, "Please enter state"),
+  pincode: z.string().min(6, "Please enter a valid pincode"),
   amenities: z.array(z.string()).optional(),
-})
+});
 
-type PropertyForm = z.infer<typeof propertySchema>
+type PropertyForm = z.infer<typeof propertySchema>;
 
 const steps = [
-  { id: 1, title: 'Property Type', description: 'Select your property type' },
-  { id: 2, title: 'Basic Details', description: 'Enter property information' },
-  { id: 3, title: 'Location', description: 'Where is your property?' },
-  { id: 4, title: 'Amenities', description: 'Select available amenities' },
-  { id: 5, title: 'Review', description: 'Review and submit' },
-]
+  { id: 1, title: "Property Type", description: "Select your property type" },
+  { id: 2, title: "Basic Details", description: "Enter property information" },
+  { id: 3, title: "Location", description: "Where is your property?" },
+  { id: 4, title: "Amenities", description: "Select available amenities" },
+  { id: 5, title: "Review", description: "Review and submit" },
+];
 
 export default function NewPropertyPage() {
-  const router = useRouter()
-  const { user } = useAuthStore()
-  const [currentStep, setCurrentStep] = useState(1)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [selectedAmenities, setSelectedAmenities] = useState<string[]>([])
-  const [verificationLoading, setVerificationLoading] = useState(true)
-  const [isVerified, setIsVerified] = useState(false)
-  const [userRole, setUserRole] = useState<string | null>(null)
+  const router = useRouter();
+  const { user } = useAuthStore();
+  const [currentStep, setCurrentStep] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
+  const [images, setImages] = useState<string[]>([]);
+  const [images360, setImages360] = useState<string[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isUploading360, setIsUploading360] = useState(false);
+  const [verificationLoading, setVerificationLoading] = useState(true);
+  const [isVerified, setIsVerified] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
     async function checkVerification() {
-      const supabase = createClient()
-      const { data: { user: authUser } } = await supabase.auth.getUser()
-      
+      const supabase = createClient();
+      const {
+        data: { user: authUser },
+      } = await supabase.auth.getUser();
+
       if (!authUser) {
-        router.push('/auth/login')
-        return
+        router.push("/auth/login");
+        return;
       }
 
       const { data } = await supabase
-        .from('profiles')
-        .select('is_verified, role')
-        .eq('id', authUser.id)
-        .single()
+        .from("profiles")
+        .select("is_verified, verification_status, role")
+        .eq("id", authUser.id)
+        .single();
 
-      setUserRole(data?.role || null)
-      
-      if (data?.role === 'admin') {
-        setIsVerified(true)
-      } else if (data?.role === 'owner') {
-        setIsVerified(!!data?.is_verified)
+      setUserRole(data?.role || null);
+
+      if (data?.role === "admin") {
+        setIsVerified(true);
+      } else if (data?.role === "owner") {
+        // Owner must be verified to create properties (check is_verified boolean)
+        setIsVerified(!!data?.is_verified);
       } else {
-        router.push('/dashboard')
-        return
+        router.push("/dashboard");
+        return;
       }
-      setVerificationLoading(false)
+      setVerificationLoading(false);
     }
 
-    checkVerification()
-  }, [router])
+    checkVerification();
+  }, [router]);
 
   const {
     register,
     handleSubmit,
     watch,
     setValue,
+    trigger,
     formState: { errors },
   } = useForm<PropertyForm>({
     resolver: zodResolver(propertySchema),
+    mode: "onChange",
     defaultValues: {
       price_negotiable: false,
       amenities: [],
     },
-  })
+  });
 
-  const watchedValues = watch()
+  const watchedValues = watch();
+  const propertyType = watchedValues.property_type;
 
-  const onSubmit = async (data: PropertyForm) => {
-    if (!user) {
-      toast.error('Please sign in to list a property')
-      router.push('/auth/login')
-      return
+  // Dynamic field visibility based on property type
+  const shouldShowField = (field: string): boolean => {
+    if (propertyType === "land") {
+      return ["area_sqft", "facing"].includes(field);
     }
+    if (propertyType === "pg") {
+      return [
+        "bedrooms",
+        "bathrooms",
+        "furnishing",
+        "floor_number",
+        "total_floors",
+      ].includes(field);
+    }
+    // For house, apartment, villa, commercial - show all fields
+    return true;
+  };
 
-    setIsSubmitting(true)
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    setIsUploading(true);
     try {
-      const response = await fetch('/api/properties', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...data,
-          user_id: user.id,
-          amenities: selectedAmenities,
-        }),
-      })
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("user_id", user.id);
+      formData.append("property_id", "temp"); // Will be updated after property creation
 
-      const result = await response.json()
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || 'Failed to submit property')
+        throw new Error(data.error || "Failed to upload image");
       }
 
-      toast.success('Property listed successfully!')
-      router.push('/dashboard')
-    } catch (error: unknown) {
-      const err = error as Error
-      toast.error(err.message || 'Failed to submit property')
+      setImages([...images, data.url]);
+      toast.success("Image uploaded successfully");
+    } catch (error: any) {
+      console.error("Upload error:", error);
+      toast.error(error.message || "Failed to upload image");
     } finally {
-      setIsSubmitting(false)
+      setIsUploading(false);
+      if (e.target) e.target.value = "";
     }
-  }
+  };
 
-  const nextStep = () => {
-    if (currentStep < steps.length) {
-      setCurrentStep(currentStep + 1)
+  const handleRemoveImage = (index: number) => {
+    setImages(images.filter((_, i) => i !== index));
+  };
+
+  const handle360ImageUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    setIsUploading360(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("user_id", user.id);
+      formData.append("property_id", "temp");
+
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to upload 360 image");
+      }
+
+      setImages360([...images360, data.url]);
+      toast.success("360° image uploaded successfully");
+    } catch (error: any) {
+      console.error("Upload error:", error);
+      toast.error(error.message || "Failed to upload 360 image");
+    } finally {
+      setIsUploading360(false);
+      if (e.target) e.target.value = "";
     }
-  }
+  };
+
+  const handleRemove360Image = (index: number) => {
+    setImages360(images360.filter((_, i) => i !== index));
+  };
+
+  const validateCurrentStep = async (): Promise<boolean> => {
+    let fieldsToValidate: (keyof PropertyForm)[] = [];
+
+    switch (currentStep) {
+      case 1:
+        fieldsToValidate = ["property_type", "listing_type"];
+        break;
+      case 2:
+        fieldsToValidate = ["title", "description", "price"];
+        break;
+      case 3:
+        fieldsToValidate = ["address", "city", "state", "pincode"];
+        break;
+      case 4:
+        // Amenities are optional, so no validation needed
+        return true;
+      default:
+        return true;
+    }
+
+    const isValid = await trigger(fieldsToValidate);
+    return isValid;
+  };
+
+  const nextStep = async () => {
+    const isValid = await validateCurrentStep();
+    if (!isValid) {
+      toast.error("Please fill in all required fields before proceeding");
+      return;
+    }
+    if (currentStep < steps.length) {
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const onSubmit: SubmitHandler<PropertyForm> = async (data) => {
+    if (!user) {
+      toast.error("Please sign in to list a property");
+      router.push("/auth/login");
+      return;
+    }
+
+    // Validate all fields one more time before submitting
+    const isValid = await trigger();
+    if (!isValid) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      // Prepare the property data with all required fields
+      const propertyData = {
+        ...data,
+        user_id: user.id,
+        amenities: selectedAmenities || [],
+        images: images || [],
+        images_360: images360 || [],
+        locality: data.address?.split(",")[0] || null, // Extract locality from address
+        possession_status: "ready" as const, // Default value
+        status: "pending" as const,
+      };
+
+      console.log("📤 Submitting property:", {
+        ...propertyData,
+        images_count: images.length,
+        images_360_count: images360.length,
+        images_360: images360,
+      });
+
+      const response = await fetch("/api/properties", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(propertyData),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to submit property");
+      }
+
+      // Check for warning about missing column
+      if (result.warning) {
+        console.warn("⚠️", result.warning);
+        toast.warning(result.warning);
+      }
+
+      toast.success(
+        "Property listed successfully! It will be reviewed by admin before going live."
+      );
+      router.push("/dashboard/properties");
+    } catch (error: unknown) {
+      const err = error as Error;
+      console.error("Property submission error:", err);
+      toast.error(
+        err.message || "Failed to submit property. Please try again."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const prevStep = () => {
     if (currentStep > 1) {
-      setCurrentStep(currentStep - 1)
+      setCurrentStep(currentStep - 1);
     }
-  }
+  };
 
   if (verificationLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
-    )
+    );
   }
 
   if (!isVerified) {
@@ -216,19 +407,24 @@ export default function NewPropertyPage() {
           </div>
           <h1 className="text-3xl font-bold mb-4">Verification Required</h1>
           <p className="text-muted-foreground text-lg mb-8">
-            To maintain a high-quality marketplace, property owners must be verified by our team before listing properties.
+            To maintain a high-quality marketplace, property owners must be
+            verified by our team before listing properties.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button size="lg" onClick={() => router.push('/dashboard/verify')}>
+            <Button size="lg" onClick={() => router.push("/dashboard/verify")}>
               Get Verified Now
             </Button>
-            <Button variant="ghost" size="lg" onClick={() => router.push('/dashboard')}>
+            <Button
+              variant="ghost"
+              size="lg"
+              onClick={() => router.push("/dashboard")}
+            >
               Return to Dashboard
             </Button>
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -260,8 +456,8 @@ export default function NewPropertyPage() {
                   <div
                     className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-colors ${
                       currentStep >= step.id
-                        ? 'bg-primary border-primary text-primary-foreground'
-                        : 'border-muted-foreground/30 text-muted-foreground'
+                        ? "bg-primary border-primary text-primary-foreground"
+                        : "border-muted-foreground/30 text-muted-foreground"
                     }`}
                   >
                     {currentStep > step.id ? (
@@ -273,7 +469,7 @@ export default function NewPropertyPage() {
                   {index < steps.length - 1 && (
                     <div
                       className={`hidden sm:block w-24 h-0.5 mx-2 ${
-                        currentStep > step.id ? 'bg-primary' : 'bg-muted'
+                        currentStep > step.id ? "bg-primary" : "bg-muted"
                       }`}
                     />
                   )}
@@ -288,6 +484,7 @@ export default function NewPropertyPage() {
             </div>
           </div>
 
+          {/* @ts-expect-error - handleSubmit type inference issue with zodResolver */}
           <form onSubmit={handleSubmit(onSubmit)}>
             <AnimatePresence mode="wait">
               {currentStep === 1 && (
@@ -299,28 +496,36 @@ export default function NewPropertyPage() {
                   className="space-y-6"
                 >
                   <div>
-                    <Label className="text-base mb-4 block">Property Type</Label>
+                    <Label className="text-base mb-4 block">
+                      Property Type
+                    </Label>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                       {propertyTypes.map((type) => (
                         <button
                           key={type.id}
                           type="button"
-                          onClick={() => setValue('property_type', type.id)}
+                          onClick={() => setValue("property_type", type.id)}
                           className={`p-6 rounded-xl border-2 text-center transition-all ${
                             watchedValues.property_type === type.id
-                              ? 'border-primary bg-primary/5'
-                              : 'hover:border-primary/50'
+                              ? "border-primary bg-primary/5"
+                              : "hover:border-primary/50"
                           }`}
                         >
-                          <type.icon className={`w-8 h-8 mx-auto mb-2 ${
-                            watchedValues.property_type === type.id ? 'text-primary' : ''
-                          }`} />
+                          <type.icon
+                            className={`w-8 h-8 mx-auto mb-2 ${
+                              watchedValues.property_type === type.id
+                                ? "text-primary"
+                                : ""
+                            }`}
+                          />
                           <span className="font-medium">{type.label}</span>
                         </button>
                       ))}
                     </div>
                     {errors.property_type && (
-                      <p className="text-sm text-destructive mt-2">{errors.property_type.message}</p>
+                      <p className="text-sm text-destructive mt-2">
+                        {errors.property_type.message}
+                      </p>
                     )}
                   </div>
 
@@ -331,11 +536,11 @@ export default function NewPropertyPage() {
                         <button
                           key={type.id}
                           type="button"
-                          onClick={() => setValue('listing_type', type.id)}
+                          onClick={() => setValue("listing_type", type.id)}
                           className={`p-4 rounded-xl border-2 text-center transition-all ${
                             watchedValues.listing_type === type.id
-                              ? 'border-primary bg-primary/5'
-                              : 'hover:border-primary/50'
+                              ? "border-primary bg-primary/5"
+                              : "hover:border-primary/50"
                           }`}
                         >
                           <span className="font-medium">{type.label}</span>
@@ -343,7 +548,9 @@ export default function NewPropertyPage() {
                       ))}
                     </div>
                     {errors.listing_type && (
-                      <p className="text-sm text-destructive mt-2">{errors.listing_type.message}</p>
+                      <p className="text-sm text-destructive mt-2">
+                        {errors.listing_type.message}
+                      </p>
                     )}
                   </div>
                 </motion.div>
@@ -363,10 +570,12 @@ export default function NewPropertyPage() {
                       id="title"
                       placeholder="e.g., Spacious 3 BHK Apartment in Bandra"
                       className="mt-2"
-                      {...register('title')}
+                      {...register("title")}
                     />
                     {errors.title && (
-                      <p className="text-sm text-destructive mt-1">{errors.title.message}</p>
+                      <p className="text-sm text-destructive mt-1">
+                        {errors.title.message}
+                      </p>
                     )}
                   </div>
 
@@ -376,10 +585,12 @@ export default function NewPropertyPage() {
                       id="description"
                       placeholder="Describe your property in detail..."
                       className="mt-2 min-h-[150px]"
-                      {...register('description')}
+                      {...register("description")}
                     />
                     {errors.description && (
-                      <p className="text-sm text-destructive mt-1">{errors.description.message}</p>
+                      <p className="text-sm text-destructive mt-1">
+                        {errors.description.message}
+                      </p>
                     )}
                   </div>
 
@@ -393,107 +604,232 @@ export default function NewPropertyPage() {
                           type="number"
                           placeholder="Enter price"
                           className="pl-10"
-                          {...register('price', { valueAsNumber: true })}
+                          {...register("price", { valueAsNumber: true })}
                         />
                       </div>
                       {errors.price && (
-                        <p className="text-sm text-destructive mt-1">{errors.price.message}</p>
+                        <p className="text-sm text-destructive mt-1">
+                          {errors.price.message}
+                        </p>
                       )}
                     </div>
-                    <div>
-                      <Label htmlFor="area">Area (sqft)</Label>
-                      <Input
-                        id="area"
-                        type="number"
-                        placeholder="Enter area"
-                        className="mt-2"
-                        {...register('area_sqft', { valueAsNumber: true })}
-                      />
-                    </div>
+                    {shouldShowField("area_sqft") && (
+                      <div>
+                        <Label htmlFor="area">Area (sqft)</Label>
+                        <Input
+                          id="area"
+                          type="number"
+                          placeholder="Enter area"
+                          className="mt-2"
+                          {...register("area_sqft", { valueAsNumber: true })}
+                        />
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-2">
                     <Checkbox
                       id="negotiable"
                       checked={watchedValues.price_negotiable}
-                      onCheckedChange={(checked) => setValue('price_negotiable', !!checked)}
+                      onCheckedChange={(checked) =>
+                        setValue("price_negotiable", !!checked)
+                      }
                     />
                     <Label htmlFor="negotiable" className="cursor-pointer">
                       Price is negotiable
                     </Label>
                   </div>
 
-                  <div className="grid sm:grid-cols-3 gap-4">
-                    <div>
-                      <Label htmlFor="bedrooms">Bedrooms</Label>
-                      <Input
-                        id="bedrooms"
-                        type="number"
-                        placeholder="No. of bedrooms"
-                        className="mt-2"
-                        {...register('bedrooms', { valueAsNumber: true })}
-                      />
+                  {shouldShowField("bedrooms") && (
+                    <div className="grid sm:grid-cols-3 gap-4">
+                      <div>
+                        <Label htmlFor="bedrooms">Bedrooms</Label>
+                        <Input
+                          id="bedrooms"
+                          type="number"
+                          placeholder="No. of bedrooms"
+                          className="mt-2"
+                          {...register("bedrooms", { valueAsNumber: true })}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="bathrooms">Bathrooms</Label>
+                        <Input
+                          id="bathrooms"
+                          type="number"
+                          placeholder="No. of bathrooms"
+                          className="mt-2"
+                          {...register("bathrooms", { valueAsNumber: true })}
+                        />
+                      </div>
+                      <div>
+                        <Label>Furnishing</Label>
+                        <Select
+                          value={watchedValues.furnishing}
+                          onValueChange={(value) =>
+                            setValue("furnishing", value)
+                          }
+                        >
+                          <SelectTrigger className="mt-2">
+                            <SelectValue placeholder="Select" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {furnishingTypes.map((type) => (
+                              <SelectItem key={type.id} value={type.id}>
+                                {type.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
-                    <div>
-                      <Label htmlFor="bathrooms">Bathrooms</Label>
-                      <Input
-                        id="bathrooms"
-                        type="number"
-                        placeholder="No. of bathrooms"
-                        className="mt-2"
-                        {...register('bathrooms', { valueAsNumber: true })}
-                      />
+                  )}
+
+                  {shouldShowField("floor_number") && (
+                    <div className="grid sm:grid-cols-3 gap-4">
+                      <div>
+                        <Label htmlFor="floor">Floor Number</Label>
+                        <Input
+                          id="floor"
+                          type="number"
+                          placeholder="Floor"
+                          className="mt-2"
+                          {...register("floor_number", { valueAsNumber: true })}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="totalFloors">Total Floors</Label>
+                        <Input
+                          id="totalFloors"
+                          type="number"
+                          placeholder="Total floors"
+                          className="mt-2"
+                          {...register("total_floors", { valueAsNumber: true })}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="age">Age (years)</Label>
+                        <Input
+                          id="age"
+                          type="number"
+                          placeholder="Property age"
+                          className="mt-2"
+                          {...register("age_of_property", {
+                            valueAsNumber: true,
+                          })}
+                        />
+                      </div>
                     </div>
-                    <div>
-                      <Label>Furnishing</Label>
-                      <Select
-                        value={watchedValues.furnishing}
-                        onValueChange={(value) => setValue('furnishing', value)}
+                  )}
+
+                  {/* Image Upload */}
+                  <div>
+                    <Label className="text-base mb-4 block">
+                      Property Images
+                    </Label>
+                    {images.length > 0 && (
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
+                        {images.map((image, index) => (
+                          <div key={index} className="relative group">
+                            <img
+                              src={image}
+                              alt={`Property ${index + 1}`}
+                              className="w-full h-32 object-cover rounded-lg"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveImage(index)}
+                              className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <div className="border-2 border-dashed rounded-lg p-8 text-center">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        className="hidden"
+                        id="image-upload"
+                        disabled={isUploading}
+                      />
+                      <label
+                        htmlFor="image-upload"
+                        className={`cursor-pointer flex flex-col items-center ${isUploading ? "opacity-50" : ""}`}
                       >
-                        <SelectTrigger className="mt-2">
-                          <SelectValue placeholder="Select" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {furnishingTypes.map((type) => (
-                            <SelectItem key={type.id} value={type.id}>
-                              {type.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        {isUploading ? (
+                          <Loader2 className="w-8 h-8 animate-spin text-primary mb-2" />
+                        ) : (
+                          <Upload className="w-8 h-8 text-muted-foreground mb-2" />
+                        )}
+                        <span className="text-sm text-muted-foreground">
+                          {isUploading
+                            ? "Uploading..."
+                            : "Click to upload images"}
+                        </span>
+                      </label>
                     </div>
                   </div>
 
-                  <div className="grid sm:grid-cols-3 gap-4">
-                    <div>
-                      <Label htmlFor="floor">Floor Number</Label>
-                      <Input
-                        id="floor"
-                        type="number"
-                        placeholder="Floor"
-                        className="mt-2"
-                        {...register('floor_number', { valueAsNumber: true })}
+                  <div>
+                    <Label className="text-base mb-4 block">
+                      <Compass className="w-4 h-4 inline mr-2" />
+                      360° Panoramic Images (Optional)
+                    </Label>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Upload 360-degree panoramic images for an immersive
+                      viewing experience
+                    </p>
+                    {images360.length > 0 && (
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
+                        {images360.map((image, index) => (
+                          <div key={index} className="relative group">
+                            <img
+                              src={image}
+                              alt={`360° View ${index + 1}`}
+                              className="w-full h-32 object-cover rounded-lg"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleRemove360Image(index)}
+                              className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                            <Badge className="absolute top-2 left-2 bg-primary/90">
+                              360°
+                            </Badge>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <div className="border-2 border-dashed rounded-lg p-8 text-center">
+                      <input
+                        type="file"
+                        accept="image/*,.exr,image/x-exr"
+                        onChange={handle360ImageUpload}
+                        className="hidden"
+                        id="360-image-upload"
+                        disabled={isUploading360}
                       />
-                    </div>
-                    <div>
-                      <Label htmlFor="totalFloors">Total Floors</Label>
-                      <Input
-                        id="totalFloors"
-                        type="number"
-                        placeholder="Total floors"
-                        className="mt-2"
-                        {...register('total_floors', { valueAsNumber: true })}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="age">Age (years)</Label>
-                      <Input
-                        id="age"
-                        type="number"
-                        placeholder="Property age"
-                        className="mt-2"
-                        {...register('age_of_property', { valueAsNumber: true })}
-                      />
+                      <label
+                        htmlFor="360-image-upload"
+                        className={`cursor-pointer flex flex-col items-center ${isUploading360 ? "opacity-50" : ""}`}
+                      >
+                        {isUploading360 ? (
+                          <Loader2 className="w-8 h-8 animate-spin text-primary mb-2" />
+                        ) : (
+                          <Compass className="w-8 h-8 text-muted-foreground mb-2" />
+                        )}
+                        <span className="text-sm text-muted-foreground">
+                          {isUploading360
+                            ? "Uploading..."
+                            : "Click to upload 360° images"}
+                        </span>
+                      </label>
                     </div>
                   </div>
                 </motion.div>
@@ -515,11 +851,13 @@ export default function NewPropertyPage() {
                         id="address"
                         placeholder="Enter complete address with landmarks"
                         className="pl-10 min-h-[100px]"
-                        {...register('address')}
+                        {...register("address")}
                       />
                     </div>
                     {errors.address && (
-                      <p className="text-sm text-destructive mt-1">{errors.address.message}</p>
+                      <p className="text-sm text-destructive mt-1">
+                        {errors.address.message}
+                      </p>
                     )}
                   </div>
 
@@ -528,7 +866,7 @@ export default function NewPropertyPage() {
                       <Label>City</Label>
                       <Select
                         value={watchedValues.city}
-                        onValueChange={(value) => setValue('city', value)}
+                        onValueChange={(value) => setValue("city", value)}
                       >
                         <SelectTrigger className="mt-2">
                           <SelectValue placeholder="Select city" />
@@ -542,7 +880,9 @@ export default function NewPropertyPage() {
                         </SelectContent>
                       </Select>
                       {errors.city && (
-                        <p className="text-sm text-destructive mt-1">{errors.city.message}</p>
+                        <p className="text-sm text-destructive mt-1">
+                          {errors.city.message}
+                        </p>
                       )}
                     </div>
                     <div>
@@ -551,10 +891,12 @@ export default function NewPropertyPage() {
                         id="state"
                         placeholder="Enter state"
                         className="mt-2"
-                        {...register('state')}
+                        {...register("state")}
                       />
                       {errors.state && (
-                        <p className="text-sm text-destructive mt-1">{errors.state.message}</p>
+                        <p className="text-sm text-destructive mt-1">
+                          {errors.state.message}
+                        </p>
                       )}
                     </div>
                     <div>
@@ -563,23 +905,27 @@ export default function NewPropertyPage() {
                         id="pincode"
                         placeholder="Enter pincode"
                         className="mt-2"
-                        {...register('pincode')}
+                        {...register("pincode")}
                       />
                       {errors.pincode && (
-                        <p className="text-sm text-destructive mt-1">{errors.pincode.message}</p>
+                        <p className="text-sm text-destructive mt-1">
+                          {errors.pincode.message}
+                        </p>
                       )}
                     </div>
                   </div>
 
-                  <div>
-                    <Label htmlFor="facing">Facing Direction</Label>
-                    <Input
-                      id="facing"
-                      placeholder="e.g., North, East, Main Road"
-                      className="mt-2"
-                      {...register('facing')}
-                    />
-                  </div>
+                  {shouldShowField("facing") && (
+                    <div>
+                      <Label htmlFor="facing">Facing Direction</Label>
+                      <Input
+                        id="facing"
+                        placeholder="e.g., North, East, Main Road"
+                        className="mt-2"
+                        {...register("facing")}
+                      />
+                    </div>
+                  )}
                 </motion.div>
               )}
 
@@ -592,24 +938,31 @@ export default function NewPropertyPage() {
                   className="space-y-6"
                 >
                   <div>
-                    <Label className="text-base mb-4 block">Select Amenities</Label>
+                    <Label className="text-base mb-4 block">
+                      Select Amenities
+                    </Label>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                       {AMENITIES.map((amenity) => (
                         <label
                           key={amenity}
                           className={`flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${
                             selectedAmenities.includes(amenity)
-                              ? 'border-primary bg-primary/5'
-                              : 'hover:border-primary/50'
+                              ? "border-primary bg-primary/5"
+                              : "hover:border-primary/50"
                           }`}
                         >
                           <Checkbox
                             checked={selectedAmenities.includes(amenity)}
                             onCheckedChange={(checked) => {
                               if (checked) {
-                                setSelectedAmenities([...selectedAmenities, amenity])
+                                setSelectedAmenities([
+                                  ...selectedAmenities,
+                                  amenity,
+                                ]);
                               } else {
-                                setSelectedAmenities(selectedAmenities.filter((a) => a !== amenity))
+                                setSelectedAmenities(
+                                  selectedAmenities.filter((a) => a !== amenity)
+                                );
                               }
                             }}
                           />
@@ -630,54 +983,85 @@ export default function NewPropertyPage() {
                   className="space-y-6"
                 >
                   <div className="p-6 rounded-xl border bg-card">
-                    <h3 className="font-semibold text-lg mb-4">Review Your Listing</h3>
-                    
+                    <h3 className="font-semibold text-lg mb-4">
+                      Review Your Listing
+                    </h3>
+
                     <div className="space-y-4">
                       <div className="grid sm:grid-cols-2 gap-4">
                         <div>
-                          <span className="text-sm text-muted-foreground">Property Type</span>
-                          <p className="font-medium capitalize">{watchedValues.property_type}</p>
+                          <span className="text-sm text-muted-foreground">
+                            Property Type
+                          </span>
+                          <p className="font-medium capitalize">
+                            {watchedValues.property_type}
+                          </p>
                         </div>
                         <div>
-                          <span className="text-sm text-muted-foreground">Listing Type</span>
-                          <p className="font-medium capitalize">{watchedValues.listing_type}</p>
+                          <span className="text-sm text-muted-foreground">
+                            Listing Type
+                          </span>
+                          <p className="font-medium capitalize">
+                            {watchedValues.listing_type}
+                          </p>
                         </div>
                       </div>
 
                       <div>
-                        <span className="text-sm text-muted-foreground">Title</span>
+                        <span className="text-sm text-muted-foreground">
+                          Title
+                        </span>
                         <p className="font-medium">{watchedValues.title}</p>
                       </div>
 
                       <div>
-                        <span className="text-sm text-muted-foreground">Description</span>
+                        <span className="text-sm text-muted-foreground">
+                          Description
+                        </span>
                         <p className="text-sm">{watchedValues.description}</p>
                       </div>
 
                       <div className="grid sm:grid-cols-3 gap-4">
                         <div>
-                          <span className="text-sm text-muted-foreground">Price</span>
-                          <p className="font-medium">₹{watchedValues.price?.toLocaleString()}</p>
+                          <span className="text-sm text-muted-foreground">
+                            Price
+                          </span>
+                          <p className="font-medium">
+                            ₹{watchedValues.price?.toLocaleString()}
+                          </p>
                         </div>
                         <div>
-                          <span className="text-sm text-muted-foreground">Area</span>
-                          <p className="font-medium">{watchedValues.area_sqft} sqft</p>
+                          <span className="text-sm text-muted-foreground">
+                            Area
+                          </span>
+                          <p className="font-medium">
+                            {watchedValues.area_sqft} sqft
+                          </p>
                         </div>
                         <div>
-                          <span className="text-sm text-muted-foreground">Bedrooms</span>
-                          <p className="font-medium">{watchedValues.bedrooms}</p>
+                          <span className="text-sm text-muted-foreground">
+                            Bedrooms
+                          </span>
+                          <p className="font-medium">
+                            {watchedValues.bedrooms}
+                          </p>
                         </div>
                       </div>
 
                       <div>
-                        <span className="text-sm text-muted-foreground">Location</span>
+                        <span className="text-sm text-muted-foreground">
+                          Location
+                        </span>
                         <p className="font-medium">
-                          {watchedValues.address}, {watchedValues.city}, {watchedValues.state} - {watchedValues.pincode}
+                          {watchedValues.address}, {watchedValues.city},{" "}
+                          {watchedValues.state} - {watchedValues.pincode}
                         </p>
                       </div>
 
                       <div>
-                        <span className="text-sm text-muted-foreground">Amenities</span>
+                        <span className="text-sm text-muted-foreground">
+                          Amenities
+                        </span>
                         <div className="flex flex-wrap gap-2 mt-1">
                           {selectedAmenities.map((amenity) => (
                             <span
@@ -694,8 +1078,9 @@ export default function NewPropertyPage() {
 
                   <div className="p-4 rounded-xl bg-primary/5 border border-primary/20">
                     <p className="text-sm">
-                      By submitting, you agree to our terms and confirm that the information provided is accurate.
-                      Your listing will be reviewed before going live.
+                      By submitting, you agree to our terms and confirm that the
+                      information provided is accurate. Your listing will be
+                      reviewed before going live.
                     </p>
                   </div>
                 </motion.div>
@@ -738,5 +1123,5 @@ export default function NewPropertyPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

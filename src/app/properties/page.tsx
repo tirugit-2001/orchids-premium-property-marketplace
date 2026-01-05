@@ -26,8 +26,10 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet'
 import { createClient } from '@/lib/supabase/client'
+import { useAuthStore } from '@/lib/store'
 import type { Property, PropertyType, ListingType, FurnishingType } from '@/lib/types'
 import { CITIES, AMENITIES } from '@/lib/types'
+import { toast } from 'sonner'
 import {
   Search,
   SlidersHorizontal,
@@ -276,6 +278,7 @@ const sampleProperties: Property[] = [
 function PropertiesContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
+  const { user } = useAuthStore()
   const [properties, setProperties] = useState<Property[]>(sampleProperties)
   const [isLoading, setIsLoading] = useState(false)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
@@ -288,10 +291,17 @@ function PropertiesContent() {
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([])
   const [sortBy, setSortBy] = useState('newest')
   const [showMap, setShowMap] = useState(false)
+  const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     fetchProperties()
   }, [selectedCity, selectedType, selectedListing, sortBy])
+
+  useEffect(() => {
+    if (user) {
+      fetchFavoriteIds()
+    }
+  }, [user, properties])
 
   const fetchProperties = async () => {
     setIsLoading(true)
@@ -336,6 +346,73 @@ function PropertiesContent() {
       setProperties(sampleProperties)
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const fetchFavoriteIds = async () => {
+    if (!user) return
+
+    try {
+      const response = await fetch('/api/favorites')
+      const data = await response.json()
+
+      if (response.ok && data.favorites) {
+        const ids = new Set(data.favorites.map((f: any) => f.property_id))
+        setFavoriteIds(ids)
+      }
+    } catch (error) {
+      console.error('Error fetching favorites:', error)
+    }
+  }
+
+  const handleFavorite = async (propertyId: string) => {
+    if (!user) {
+      toast.error('Please sign in to save favorites')
+      router.push('/auth/login')
+      return
+    }
+
+    try {
+      const isFavorite = favoriteIds.has(propertyId)
+
+      if (isFavorite) {
+        // Remove from favorites
+        const response = await fetch(`/api/favorites?property_id=${propertyId}`, {
+          method: 'DELETE',
+        })
+
+        const data = await response.json()
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to remove favorite')
+        }
+
+        setFavoriteIds(prev => {
+          const newSet = new Set(prev)
+          newSet.delete(propertyId)
+          return newSet
+        })
+        toast.success('Removed from favorites')
+      } else {
+        // Add to favorites
+        const response = await fetch('/api/favorites', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ property_id: propertyId }),
+        })
+
+        const data = await response.json()
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to add favorite')
+        }
+
+        setFavoriteIds(prev => new Set(prev).add(propertyId))
+        toast.success('Added to favorites')
+      }
+    } catch (error: any) {
+      console.error('Favorite error:', error)
+      toast.error(error.message || 'Failed to update favorite')
     }
   }
 
@@ -631,7 +708,12 @@ function PropertiesContent() {
                 }`}
               >
                 {filteredProperties.map((property) => (
-                  <PropertyCard key={property.id} property={property} />
+                  <PropertyCard 
+                    key={property.id} 
+                    property={property}
+                    isFavorite={favoriteIds.has(property.id)}
+                    onFavorite={handleFavorite}
+                  />
                 ))}
               </motion.div>
 

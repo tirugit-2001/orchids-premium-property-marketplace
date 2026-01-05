@@ -1,28 +1,29 @@
-'use client'
+"use client";
 
-import { useState, useEffect, use } from 'react'
-import Image from 'next/image'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { motion } from 'framer-motion'
-import { Navbar } from '@/components/Navbar'
-import { Footer } from '@/components/Footer'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { useState, useEffect, use } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
+import { Navbar } from "@/components/Navbar";
+import { Footer } from "@/components/Footer";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog'
-import { createClient } from '@/lib/supabase/client'
-import { useAuthStore } from '@/lib/store'
-import type { Property } from '@/lib/types'
-import { toast } from 'sonner'
-import { VisitScheduler } from '@/components/VisitScheduler'
-import { NeighborhoodInsights } from '@/components/NeighborhoodInsights'
+} from "@/components/ui/dialog";
+import { createClient } from "@/lib/supabase/client";
+import { useAuthStore } from "@/lib/store";
+import type { Property } from "@/lib/types";
+import { toast } from "sonner";
+import { VisitScheduler } from "@/components/VisitScheduler";
+import { NeighborhoodInsights } from "@/components/NeighborhoodInsights";
+import { Panorama360Viewer } from "@/components/Panorama360Viewer";
 import {
   Heart,
   Share2,
@@ -35,6 +36,7 @@ import {
   Calendar,
   Phone,
   MessageSquare,
+  Mail,
   ChevronLeft,
   ChevronRight,
   X,
@@ -48,12 +50,12 @@ import {
   Loader2,
   Lock,
   Check,
-} from 'lucide-react'
+} from "lucide-react";
 
 const sampleProperty: Property = {
-  id: '1',
-  owner_id: '1',
-  title: 'Luxury 3 BHK Apartment in Bandra West',
+  id: "1",
+  owner_id: "1",
+  title: "Luxury 3 BHK Apartment in Bandra West",
   description: `Experience luxury living in this stunning 3 BHK apartment located in the heart of Bandra West. This meticulously designed home offers breathtaking sea views and world-class amenities.
 
 The apartment features spacious rooms with high ceilings, premium Italian marble flooring, and large windows that flood the space with natural light. The modular kitchen is equipped with top-of-the-line appliances and ample storage space.
@@ -61,114 +63,254 @@ The apartment features spacious rooms with high ceilings, premium Italian marble
 Building amenities include a state-of-the-art gym, infinity swimming pool, landscaped gardens, children's play area, and 24/7 security. The location offers easy access to restaurants, cafes, shopping centers, and excellent connectivity to the rest of Mumbai.
 
 Perfect for families looking for a premium lifestyle in one of Mumbai's most sought-after neighborhoods.`,
-  property_type: 'apartment',
-  listing_type: 'rent',
+  property_type: "apartment",
+  listing_type: "rent",
   price: 85000,
   price_negotiable: true,
   area_sqft: 1450,
   bedrooms: 3,
   bathrooms: 2,
-  furnishing: 'fully-furnished',
+  furnishing: "fully-furnished",
   floor_number: 12,
   total_floors: 20,
-  facing: 'West',
+  facing: "West",
   age_of_property: 5,
-  address: 'Bandra West, Near Bandstand',
-  city: 'Mumbai',
-  state: 'Maharashtra',
-  pincode: '400050',
+  address: "Bandra West, Near Bandstand",
+  city: "Mumbai",
+  state: "Maharashtra",
+  pincode: "400050",
   latitude: 19.0596,
   longitude: 72.8295,
-  amenities: ['Parking', 'Gym', 'Swimming Pool', 'Security', 'Lift', 'Power Backup', 'Club House', 'Garden', 'Intercom'],
+  amenities: [
+    "Parking",
+    "Gym",
+    "Swimming Pool",
+    "Security",
+    "Lift",
+    "Power Backup",
+    "Club House",
+    "Garden",
+    "Intercom",
+  ],
   images: [
-    'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=1200',
-    'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=1200',
-    'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=1200',
-    'https://images.unsplash.com/photo-1484154218962-a197022b5858?w=1200',
-    'https://images.unsplash.com/photo-1560185007-cde436f6a4d0?w=1200',
+    "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=1200",
+    "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=1200",
+    "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=1200",
+    "https://images.unsplash.com/photo-1484154218962-a197022b5858?w=1200",
+    "https://images.unsplash.com/photo-1560185007-cde436f6a4d0?w=1200",
   ],
   video_url: null,
   virtual_tour_url: null,
+  images_360: [],
   is_verified: true,
   is_active: true,
   views_count: 234,
   contacts_count: 12,
-  status: 'approved',
+  status: "approved",
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),
   owner: {
-    id: '1',
-    email: 'owner@example.com',
-    full_name: 'Rajesh Kumar',
-    phone: '+91 98765 43210',
-    avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
-    role: 'owner',
+    id: "1",
+    email: "owner@example.com",
+    full_name: "Rajesh Kumar",
+    phone: "+91 98765 43210",
+    avatar_url:
+      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150",
+    role: "owner",
     is_verified: true,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   },
-}
+};
 
-export default function PropertyDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const resolvedParams = use(params)
-  const router = useRouter()
-  const { user, subscription } = useAuthStore()
-  const [property, setProperty] = useState<Property | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [currentImageIndex, setCurrentImageIndex] = useState(0)
-  const [isGalleryOpen, setIsGalleryOpen] = useState(false)
-  const [isFavorite, setIsFavorite] = useState(false)
-  const [showContactModal, setShowContactModal] = useState(false)
-  const [hasRevealedContact, setHasRevealedContact] = useState(false)
+export default function PropertyDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const resolvedParams = use(params);
+  const router = useRouter();
+  const { user, subscription } = useAuthStore();
+  const [property, setProperty] = useState<Property | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [showContactModal, setShowContactModal] = useState(false);
+  const [hasRevealedContact, setHasRevealedContact] = useState(false);
+  const [contactInfo, setContactInfo] = useState<{
+    phone?: string;
+    email?: string;
+    whatsapp?: string;
+    name?: string;
+  } | null>(null);
+  const [show360Viewer, setShow360Viewer] = useState(false);
+  const [current360Index, setCurrent360Index] = useState(0);
 
   useEffect(() => {
-    fetchProperty()
-  }, [resolvedParams.id])
+    fetchProperty();
+  }, [resolvedParams.id]);
 
-  const fetchProperty = async () => {
-    setIsLoading(true)
+  useEffect(() => {
+    // Check if contact was already revealed
+    if (user && property) {
+      checkContactReveal();
+      checkFavoriteStatus();
+    }
+  }, [user, property]);
+
+  const checkContactReveal = async () => {
+    if (!user || !property) return;
+
     try {
-      const supabase = createClient()
-      const { data, error } = await supabase
-        .from('properties')
-        .select('*, owner:profiles(*)')
-        .eq('id', resolvedParams.id)
-        .single()
+      const response = await fetch(
+        `/api/contacts/reveal?property_id=${property.id}`
+      );
+      const data = await response.json();
 
-      if (error) throw error
-      if (data) {
-        setProperty(data)
-      } else {
-        setProperty({ ...sampleProperty, id: resolvedParams.id })
+      if (response.ok && data.is_revealed && data.contact) {
+        setHasRevealedContact(true);
+        setContactInfo(data.contact);
       }
     } catch (error) {
-      console.error('Error fetching property:', error)
-      setProperty({ ...sampleProperty, id: resolvedParams.id })
-    } finally {
-      setIsLoading(false)
+      console.error("Error checking contact reveal:", error);
     }
-  }
+  };
+
+  const checkFavoriteStatus = async () => {
+    if (!user || !property) return;
+
+    try {
+      const response = await fetch(`/api/favorites?property_id=${property.id}`);
+      const data = await response.json();
+
+      if (response.ok) {
+        setIsFavorite(data.is_favorite || false);
+      }
+    } catch (error) {
+      console.error("Error checking favorite status:", error);
+    }
+  };
+
+  const fetchProperty = async () => {
+    setIsLoading(true);
+    try {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("properties")
+        .select("*, owner:profiles(*)")
+        .eq("id", resolvedParams.id)
+        .single();
+
+      if (error) throw error;
+      if (data) {
+        // Ensure images_360 is an array (handle null/undefined)
+        let images360: string[] = [];
+        if (data.images_360) {
+          if (Array.isArray(data.images_360)) {
+            images360 = data.images_360.filter(
+              (img: any) => img && String(img).trim() !== ""
+            );
+          } else if (typeof data.images_360 === "string") {
+            // Handle string that might be JSON
+            try {
+              const parsed = JSON.parse(data.images_360);
+              images360 = Array.isArray(parsed)
+                ? parsed.filter((img: any) => img && String(img).trim() !== "")
+                : [];
+            } catch {
+              images360 = [data.images_360].filter(
+                (img: any) => img && String(img).trim() !== ""
+              );
+            }
+          }
+        }
+
+        const propertyData = {
+          ...data,
+          images_360: images360,
+        };
+        setProperty(propertyData as Property);
+
+        // Debug logging
+        console.log("🏠 Property loaded:", {
+          id: propertyData.id,
+          title: propertyData.title,
+          images_count: propertyData.images?.length || 0,
+          images_360_count: images360.length,
+          images_360: images360,
+        });
+      } else {
+        setProperty({ ...sampleProperty, id: resolvedParams.id });
+      }
+    } catch (error) {
+      console.error("Error fetching property:", error);
+      setProperty({ ...sampleProperty, id: resolvedParams.id });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const formatPrice = (price: number, listingType: string) => {
     if (price >= 10000000) {
-      return `${(price / 10000000).toFixed(2)} Cr`
+      return `${(price / 10000000).toFixed(2)} Cr`;
     } else if (price >= 100000) {
-      return `${(price / 100000).toFixed(2)} L`
+      return `${(price / 100000).toFixed(2)} L`;
     } else if (price >= 1000) {
-      return `${(price / 1000).toFixed(1)}K`
+      return `${(price / 1000).toFixed(1)}K`;
     }
-    return price.toString()
-  }
+    return price.toString();
+  };
 
   const handleFavorite = async () => {
     if (!user) {
-      toast.error('Please sign in to save favorites')
-      router.push('/auth/login')
-      return
+      toast.error("Please sign in to save favorites");
+      router.push("/auth/login");
+      return;
     }
-    setIsFavorite(!isFavorite)
-    toast.success(isFavorite ? 'Removed from favorites' : 'Added to favorites')
-  }
+
+    if (!property) return;
+
+    try {
+      if (isFavorite) {
+        // Remove from favorites
+        const response = await fetch(
+          `/api/favorites?property_id=${property.id}`,
+          {
+            method: "DELETE",
+          }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "Failed to remove favorite");
+        }
+
+        setIsFavorite(false);
+        toast.success("Removed from favorites");
+      } else {
+        // Add to favorites
+        const response = await fetch("/api/favorites", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ property_id: property.id }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "Failed to add favorite");
+        }
+
+        setIsFavorite(true);
+        toast.success("Added to favorites");
+      }
+    } catch (error: any) {
+      console.error("Favorite error:", error);
+      toast.error(error.message || "Failed to update favorite");
+    }
+  };
 
   const handleShare = async () => {
     try {
@@ -176,51 +318,54 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
         title: property?.title,
         text: `Check out this property: ${property?.title}`,
         url: window.location.href,
-      })
+      });
     } catch {
-      navigator.clipboard.writeText(window.location.href)
-      toast.success('Link copied to clipboard')
+      navigator.clipboard.writeText(window.location.href);
+      toast.success("Link copied to clipboard");
     }
-  }
+  };
 
   const handleRevealContact = async () => {
     if (!user) {
-      toast.error('Please sign in to view contact details')
-      router.push('/auth/login')
-      return
+      toast.error("Please sign in to view contact details");
+      router.push("/auth/login");
+      return;
     }
 
     try {
-      const response = await fetch('/api/contacts/reveal', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ propertyId: resolvedParams.id }),
-      })
+      const response = await fetch("/api/contacts/reveal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ property_id: resolvedParams.id }),
+      });
 
-      const data = await response.json()
+      const data = await response.json();
 
       if (!response.ok) {
         if (response.status === 403) {
-          setShowContactModal(true)
-          return
+          setShowContactModal(true);
+          return;
         }
-        throw new Error(data.error || 'Failed to reveal contact')
+        throw new Error(data.error || "Failed to reveal contact");
       }
 
-      setHasRevealedContact(true)
-      toast.success('Contact details revealed!')
+      setHasRevealedContact(true);
+      if (data.contact) {
+        setContactInfo(data.contact);
+      }
+      toast.success("Contact details revealed!");
       // Refresh user data to update contact limits if needed
     } catch (error: any) {
-      toast.error(error.message)
+      toast.error(error.message);
     }
-  }
+  };
 
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
-    )
+    );
   }
 
   if (!property) {
@@ -228,16 +373,18 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-2xl font-bold mb-2">Property not found</h2>
-          <p className="text-muted-foreground mb-4">The property you&apos;re looking for doesn&apos;t exist.</p>
+          <p className="text-muted-foreground mb-4">
+            The property you&apos;re looking for doesn&apos;t exist.
+          </p>
           <Button asChild>
             <Link href="/properties">Browse Properties</Link>
           </Button>
         </div>
       </div>
-    )
+    );
   }
 
-  const images = property.images || sampleProperty.images
+  const images = property.images || sampleProperty.images;
 
   return (
     <div className="min-h-screen bg-background">
@@ -260,7 +407,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
               onClick={() => setIsGalleryOpen(true)}
             >
               <Image
-                src={images?.[0] || ''}
+                src={images?.[0] || ""}
                 alt={property.title}
                 fill
                 className="object-cover group-hover:scale-105 transition-transform duration-500"
@@ -278,8 +425,8 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                   key={index}
                   className="relative h-[190px] lg:h-[242px] rounded-xl overflow-hidden cursor-pointer group"
                   onClick={() => {
-                    setCurrentImageIndex(index + 1)
-                    setIsGalleryOpen(true)
+                    setCurrentImageIndex(index + 1);
+                    setIsGalleryOpen(true);
                   }}
                 >
                   <Image
@@ -299,22 +446,36 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
               <div>
                 <div className="flex flex-wrap items-center gap-3 mb-4">
                   <Badge className="bg-primary/90">
-                    {property.listing_type === 'sale' ? 'For Sale' : property.listing_type === 'rent' ? 'For Rent' : 'For Lease'}
+                    {property.listing_type === "sale"
+                      ? "For Sale"
+                      : property.listing_type === "rent"
+                        ? "For Rent"
+                        : "For Lease"}
                   </Badge>
                   {property.is_verified && (
-                    <Badge variant="secondary" className="bg-green-500/90 text-white">
+                    <Badge
+                      variant="secondary"
+                      className="bg-green-500/90 text-white"
+                    >
                       <BadgeCheck className="w-3 h-3 mr-1" />
                       Verified
                     </Badge>
                   )}
-                  <span className="capitalize text-muted-foreground">{property.property_type}</span>
+                  <span className="capitalize text-muted-foreground">
+                    {property.property_type}
+                  </span>
                 </div>
 
-                <h1 className="text-3xl sm:text-4xl font-bold mb-4">{property.title}</h1>
+                <h1 className="text-3xl sm:text-4xl font-bold mb-4">
+                  {property.title}
+                </h1>
 
                 <div className="flex items-center gap-2 text-muted-foreground mb-6">
                   <MapPin className="w-5 h-5" />
-                  <span>{property.address}, {property.city}, {property.state} - {property.pincode}</span>
+                  <span>
+                    {property.address}, {property.city}, {property.state} -{" "}
+                    {property.pincode}
+                  </span>
                 </div>
 
                 <div className="flex items-baseline gap-2 mb-6">
@@ -323,10 +484,16 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                     {formatPrice(property.price, property.listing_type)}
                   </span>
                   <span className="text-muted-foreground text-xl">
-                    {property.listing_type === 'rent' ? '/month' : property.listing_type === 'lease' ? '/year' : ''}
+                    {property.listing_type === "rent"
+                      ? "/month"
+                      : property.listing_type === "lease"
+                        ? "/year"
+                        : ""}
                   </span>
                   {property.price_negotiable && (
-                    <Badge variant="outline" className="ml-2">Negotiable</Badge>
+                    <Badge variant="outline" className="ml-2">
+                      Negotiable
+                    </Badge>
                   )}
                 </div>
 
@@ -337,8 +504,12 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                         <BedDouble className="w-6 h-6 text-primary" />
                       </div>
                       <div>
-                        <div className="font-semibold">{property.bedrooms} Bedrooms</div>
-                        <div className="text-sm text-muted-foreground">Spacious rooms</div>
+                        <div className="font-semibold">
+                          {property.bedrooms} Bedrooms
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          Spacious rooms
+                        </div>
                       </div>
                     </div>
                   )}
@@ -348,8 +519,12 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                         <Bath className="w-6 h-6 text-primary" />
                       </div>
                       <div>
-                        <div className="font-semibold">{property.bathrooms} Bathrooms</div>
-                        <div className="text-sm text-muted-foreground">Attached baths</div>
+                        <div className="font-semibold">
+                          {property.bathrooms} Bathrooms
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          Attached baths
+                        </div>
                       </div>
                     </div>
                   )}
@@ -359,8 +534,12 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                         <Maximize className="w-6 h-6 text-primary" />
                       </div>
                       <div>
-                        <div className="font-semibold">{property.area_sqft} sqft</div>
-                        <div className="text-sm text-muted-foreground">Super built-up</div>
+                        <div className="font-semibold">
+                          {property.area_sqft} sqft
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          Super built-up
+                        </div>
                       </div>
                     </div>
                   )}
@@ -374,6 +553,80 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                 </p>
               </div>
 
+              {property.images_360 && property.images_360.length > 0 ? (
+                <div>
+                  <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+                    <Compass className="w-6 h-6 text-primary" />
+                    360° Virtual Tour
+                  </h2>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Click on any image below to experience an immersive 360°
+                    view
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {property.images_360.map((image, index) => (
+                      <div
+                        key={index}
+                        className="relative group cursor-pointer rounded-xl overflow-hidden border-2 border-primary/20 hover:border-primary/50 transition-all"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          console.log("🖱️ Opening 360° viewer:", {
+                            index,
+                            image,
+                          });
+                          setCurrent360Index(index);
+                          setShow360Viewer(true);
+                        }}
+                      >
+                        <img
+                          src={image}
+                          alt={`360° View ${index + 1}`}
+                          className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"
+                          onError={(e) => {
+                            console.error(
+                              "❌ Failed to load 360° thumbnail:",
+                              image
+                            );
+                            e.currentTarget.src = "/placeholder-360.jpg";
+                          }}
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <div className="absolute bottom-4 left-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="flex items-center gap-2 text-white font-medium">
+                            <Compass className="w-5 h-5" />
+                            <span>Click to view 360°</span>
+                          </div>
+                        </div>
+                        <Badge className="absolute top-4 left-4 bg-primary/90 text-white border-0">
+                          360°
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                // Debug: Show if images_360 exists but is empty
+                process.env.NODE_ENV === "development" && (
+                  <div className="text-sm text-muted-foreground p-4 bg-muted/50 rounded-lg">
+                    <p>
+                      Debug: images_360 = {JSON.stringify(property.images_360)}
+                    </p>
+                    <p>Type: {typeof property.images_360}</p>
+                    <p>
+                      Is Array:{" "}
+                      {Array.isArray(property.images_360) ? "Yes" : "No"}
+                    </p>
+                    <p>
+                      Length:{" "}
+                      {Array.isArray(property.images_360)
+                        ? property.images_360.length
+                        : "N/A"}
+                    </p>
+                  </div>
+                )
+              )}
+
               <div>
                 <h2 className="text-2xl font-bold mb-4">Property Details</h2>
                 <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
@@ -381,8 +634,12 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                     <div className="flex items-center gap-3 p-4 rounded-xl border">
                       <Building2 className="w-5 h-5 text-primary" />
                       <div>
-                        <div className="text-sm text-muted-foreground">Property Type</div>
-                        <div className="font-medium capitalize">{property.property_type}</div>
+                        <div className="text-sm text-muted-foreground">
+                          Property Type
+                        </div>
+                        <div className="font-medium capitalize">
+                          {property.property_type}
+                        </div>
                       </div>
                     </div>
                   )}
@@ -390,8 +647,12 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                     <div className="flex items-center gap-3 p-4 rounded-xl border">
                       <Sofa className="w-5 h-5 text-primary" />
                       <div>
-                        <div className="text-sm text-muted-foreground">Furnishing</div>
-                        <div className="font-medium capitalize">{property.furnishing.replace('-', ' ')}</div>
+                        <div className="text-sm text-muted-foreground">
+                          Furnishing
+                        </div>
+                        <div className="font-medium capitalize">
+                          {property.furnishing.replace("-", " ")}
+                        </div>
                       </div>
                     </div>
                   )}
@@ -399,8 +660,12 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                     <div className="flex items-center gap-3 p-4 rounded-xl border">
                       <Layers className="w-5 h-5 text-primary" />
                       <div>
-                        <div className="text-sm text-muted-foreground">Floor</div>
-                        <div className="font-medium">{property.floor_number} of {property.total_floors}</div>
+                        <div className="text-sm text-muted-foreground">
+                          Floor
+                        </div>
+                        <div className="font-medium">
+                          {property.floor_number} of {property.total_floors}
+                        </div>
                       </div>
                     </div>
                   )}
@@ -408,7 +673,9 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                     <div className="flex items-center gap-3 p-4 rounded-xl border">
                       <Compass className="w-5 h-5 text-primary" />
                       <div>
-                        <div className="text-sm text-muted-foreground">Facing</div>
+                        <div className="text-sm text-muted-foreground">
+                          Facing
+                        </div>
                         <div className="font-medium">{property.facing}</div>
                       </div>
                     </div>
@@ -417,31 +684,40 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                     <div className="flex items-center gap-3 p-4 rounded-xl border">
                       <Clock className="w-5 h-5 text-primary" />
                       <div>
-                        <div className="text-sm text-muted-foreground">Age of Property</div>
-                        <div className="font-medium">{property.age_of_property} years</div>
+                        <div className="text-sm text-muted-foreground">
+                          Age of Property
+                        </div>
+                        <div className="font-medium">
+                          {property.age_of_property} years
+                        </div>
                       </div>
                     </div>
                   )}
                 </div>
               </div>
 
-                {property.amenities && property.amenities.length > 0 && (
-                  <div>
-                    <h2 className="text-2xl font-bold mb-4">Amenities</h2>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                      {property.amenities.map((amenity) => (
-                        <div key={amenity} className="flex items-center gap-2 p-3 rounded-lg bg-muted/50">
-                          <Check className="w-4 h-4 text-primary" />
-                          <span className="text-sm">{amenity}</span>
-                        </div>
-                      ))}
-                    </div>
+              {property.amenities && property.amenities.length > 0 && (
+                <div>
+                  <h2 className="text-2xl font-bold mb-4">Amenities</h2>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                    {property.amenities.map((amenity) => (
+                      <div
+                        key={amenity}
+                        className="flex items-center gap-2 p-3 rounded-lg bg-muted/50"
+                      >
+                        <Check className="w-4 h-4 text-primary" />
+                        <span className="text-sm">{amenity}</span>
+                      </div>
+                    ))}
                   </div>
-                )}
+                </div>
+              )}
 
-                <NeighborhoodInsights city={property.city} address={property.address} />
-              </div>
-
+              <NeighborhoodInsights
+                city={property.city}
+                address={property.address}
+              />
+            </div>
 
             <div className="space-y-6">
               <motion.div
@@ -452,13 +728,15 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                 <div className="p-6 rounded-2xl border bg-card">
                   <div className="flex items-center gap-4 mb-6">
                     <Avatar className="h-16 w-16">
-                      <AvatarImage src={property.owner?.avatar_url || ''} />
+                      <AvatarImage src={property.owner?.avatar_url || ""} />
                       <AvatarFallback className="bg-primary text-primary-foreground text-xl">
-                        {property.owner?.full_name?.charAt(0) || 'O'}
+                        {property.owner?.full_name?.charAt(0) || "O"}
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <div className="font-semibold text-lg">{property.owner?.full_name || 'Property Owner'}</div>
+                      <div className="font-semibold text-lg">
+                        {property.owner?.full_name || "Property Owner"}
+                      </div>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         {property.owner?.is_verified && (
                           <>
@@ -470,14 +748,49 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                     </div>
                   </div>
 
-                  {hasRevealedContact || (subscription && subscription.contacts_used < subscription.contacts_limit) ? (
+                  {hasRevealedContact && contactInfo ? (
                     <div className="space-y-3 mb-6 p-4 bg-green-50 dark:bg-green-950/30 rounded-xl">
-                      <div className="flex items-center gap-3">
-                        <Phone className="w-5 h-5 text-green-600" />
-                        <span className="font-medium">{property.owner?.phone || '+91 98765 43210'}</span>
-                      </div>
+                      <h4 className="font-semibold text-green-900 dark:text-green-100">
+                        Contact Information
+                      </h4>
+                      {contactInfo.phone && (
+                        <div className="flex items-center gap-3">
+                          <Phone className="w-5 h-5 text-green-600" />
+                          <a
+                            href={`tel:${contactInfo.phone}`}
+                            className="font-medium text-green-900 dark:text-green-100 hover:underline"
+                          >
+                            {contactInfo.phone}
+                          </a>
+                        </div>
+                      )}
+                      {contactInfo.email && (
+                        <div className="flex items-center gap-3">
+                          <Mail className="w-5 h-5 text-green-600" />
+                          <a
+                            href={`mailto:${contactInfo.email}`}
+                            className="font-medium text-green-900 dark:text-green-100 hover:underline"
+                          >
+                            {contactInfo.email}
+                          </a>
+                        </div>
+                      )}
+                      {contactInfo.whatsapp && (
+                        <div className="flex items-center gap-3">
+                          <MessageSquare className="w-5 h-5 text-green-600" />
+                          <a
+                            href={`https://wa.me/${contactInfo.whatsapp.replace(/[^0-9]/g, "")}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-medium text-green-900 dark:text-green-100 hover:underline"
+                          >
+                            {contactInfo.whatsapp}
+                          </a>
+                        </div>
+                      )}
                       <div className="text-sm text-green-700 dark:text-green-400">
-                        Contact revealed! You can now call the owner directly.
+                        Contact revealed! You can now contact the owner
+                        directly.
                       </div>
                     </div>
                   ) : (
@@ -490,25 +803,40 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                     </Button>
                   )}
 
-                    <div className="grid grid-cols-2 gap-3">
-                      <Button variant="outline" className="h-12" onClick={handleFavorite}>
-                        <Heart className={`w-4 h-4 mr-2 ${isFavorite ? 'fill-red-500 text-red-500' : ''}`} />
-                        {isFavorite ? 'Saved' : 'Save'}
-                      </Button>
-                      <Button variant="outline" className="h-12" onClick={handleShare}>
-                        <Share2 className="w-4 h-4 mr-2" />
-                        Share
-                      </Button>
-                    </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Button
+                      variant="outline"
+                      className="h-12"
+                      onClick={handleFavorite}
+                    >
+                      <Heart
+                        className={`w-4 h-4 mr-2 ${isFavorite ? "fill-red-500 text-red-500" : ""}`}
+                      />
+                      {isFavorite ? "Saved" : "Save"}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="h-12"
+                      onClick={handleShare}
+                    >
+                      <Share2 className="w-4 h-4 mr-2" />
+                      Share
+                    </Button>
                   </div>
+                </div>
 
-                  <VisitScheduler propertyId={property.id} ownerId={property.owner_id} />
-
+                <VisitScheduler
+                  propertyId={property.id}
+                  ownerId={property.owner_id}
+                />
 
                 <div className="p-6 rounded-2xl border bg-gradient-to-br from-primary/5 to-accent/5">
-                  <h3 className="font-semibold mb-4">Need help finding a property?</h3>
+                  <h3 className="font-semibold mb-4">
+                    Need help finding a property?
+                  </h3>
                   <p className="text-sm text-muted-foreground mb-4">
-                    Our experts can help you find the perfect property matching your requirements.
+                    Our experts can help you find the perfect property matching
+                    your requirements.
                   </p>
                   <Button variant="outline" className="w-full">
                     <MessageSquare className="w-4 h-4 mr-2" />
@@ -533,7 +861,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
               <X className="w-6 h-6" />
             </Button>
             <Image
-              src={images?.[currentImageIndex] || ''}
+              src={images?.[currentImageIndex] || ""}
               alt={property.title}
               fill
               className="object-contain"
@@ -542,7 +870,11 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
               variant="ghost"
               size="icon"
               className="absolute left-4 top-1/2 -translate-y-1/2 text-white hover:bg-white/20"
-              onClick={() => setCurrentImageIndex((prev) => (prev === 0 ? (images?.length || 1) - 1 : prev - 1))}
+              onClick={() =>
+                setCurrentImageIndex((prev) =>
+                  prev === 0 ? (images?.length || 1) - 1 : prev - 1
+                )
+              }
             >
               <ChevronLeft className="w-8 h-8" />
             </Button>
@@ -550,7 +882,11 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
               variant="ghost"
               size="icon"
               className="absolute right-4 top-1/2 -translate-y-1/2 text-white hover:bg-white/20"
-              onClick={() => setCurrentImageIndex((prev) => (prev === (images?.length || 1) - 1 ? 0 : prev + 1))}
+              onClick={() =>
+                setCurrentImageIndex((prev) =>
+                  prev === (images?.length || 1) - 1 ? 0 : prev + 1
+                )
+              }
             >
               <ChevronRight className="w-8 h-8" />
             </Button>
@@ -559,7 +895,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                 <button
                   key={index}
                   className={`w-2 h-2 rounded-full transition-colors ${
-                    index === currentImageIndex ? 'bg-white' : 'bg-white/50'
+                    index === currentImageIndex ? "bg-white" : "bg-white/50"
                   }`}
                   onClick={() => setCurrentImageIndex(index)}
                 />
@@ -575,13 +911,18 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
             <DialogTitle>Subscribe to Contact Owners</DialogTitle>
           </DialogHeader>
           <p className="text-muted-foreground mb-6">
-            Get a subscription to unlock contact details and connect directly with property owners.
+            Get a subscription to unlock contact details and connect directly
+            with property owners.
           </p>
           <div className="space-y-3">
             <Link href="/pricing" className="block">
               <Button className="w-full">View Subscription Plans</Button>
             </Link>
-            <Button variant="outline" className="w-full" onClick={() => setShowContactModal(false)}>
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => setShowContactModal(false)}
+            >
               Maybe Later
             </Button>
           </div>
@@ -589,6 +930,16 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
       </Dialog>
 
       <Footer />
+
+      {/* 360 Viewer Modal */}
+      {property.images_360 && property.images_360.length > 0 && (
+        <Panorama360Viewer
+          images={property.images_360}
+          isOpen={show360Viewer}
+          onClose={() => setShow360Viewer(false)}
+          initialIndex={current360Index}
+        />
+      )}
     </div>
-  )
+  );
 }

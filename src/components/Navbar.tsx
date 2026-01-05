@@ -32,6 +32,7 @@ import {
   CreditCard,
   Shield,
   ShieldCheck,
+  Calendar,
 } from 'lucide-react'
 
 export function Navbar() {
@@ -206,6 +207,12 @@ export function Navbar() {
                             <Link href="/dashboard/properties">
                               <Building2 className="mr-2 h-4 w-4" />
                               My Properties
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link href="/dashboard/visits">
+                              <Calendar className="mr-2 h-4 w-4" />
+                              Visit Requests
                             </Link>
                           </DropdownMenuItem>
                           <DropdownMenuItem asChild>

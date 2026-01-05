@@ -6,7 +6,9 @@ import {
   XCircle, 
   User, 
   Clock,
-  ShieldCheck
+  ShieldCheck,
+  FileText,
+  ExternalLink
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -37,61 +39,87 @@ export default function AdminVerify() {
   }, [])
 
   async function fetchVerifications() {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('verification_status', 'pending')
-      .order('created_at', { ascending: false })
+    try {
+      const response = await fetch('/api/admin/verify')
+      const data = await response.json()
 
-    if (error) {
-      toast.error('Failed to fetch pending verifications')
-    } else {
-      setVerifications(data || [])
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to fetch verifications')
+      }
+
+      setVerifications(data.verifications || [])
+    } catch (error: any) {
+      console.error('Fetch error:', error)
+      toast.error(error.message || 'Failed to fetch pending verifications')
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   async function handleVerify(userId: string) {
     setIsSubmitting(true)
-    const { error } = await supabase
-      .from('profiles')
-      .update({ 
-        verification_status: 'verified',
-        is_verified: true
+    try {
+      const response = await fetch('/api/admin/verify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId,
+          action: 'approve',
+        }),
       })
-      .eq('id', userId)
 
-    if (error) {
-      toast.error('Failed to verify user')
-    } else {
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to verify user')
+      }
+
       toast.success('User verified successfully')
       setVerifications(verifications.filter(v => v.id !== userId))
+    } catch (error: any) {
+      console.error('Verify error:', error)
+      toast.error(error.message || 'Failed to verify user')
+    } finally {
+      setIsSubmitting(false)
     }
-    setIsSubmitting(false)
   }
 
   async function handleReject() {
     if (!selectedUser) return
 
     setIsSubmitting(true)
-    const { error } = await supabase
-      .from('profiles')
-      .update({ 
-        verification_status: 'rejected',
-        is_verified: false
+    try {
+      const response = await fetch('/api/admin/verify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: selectedUser.id,
+          action: 'reject',
+          rejectionReason: rejectionReason || 'Verification rejected by admin',
+        }),
       })
-      .eq('id', selectedUser.id)
 
-    if (error) {
-      toast.error('Failed to reject verification')
-    } else {
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to reject verification')
+      }
+
       toast.success('Verification rejected')
       setVerifications(verifications.filter(v => v.id !== selectedUser.id))
       setIsRejectOpen(false)
       setSelectedUser(null)
       setRejectionReason('')
+    } catch (error: any) {
+      console.error('Reject error:', error)
+      toast.error(error.message || 'Failed to reject verification')
+    } finally {
+      setIsSubmitting(false)
     }
-    setIsSubmitting(false)
   }
 
   if (loading) {
@@ -125,9 +153,12 @@ export default function AdminVerify() {
                 <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
                   <User className="w-6 h-6" />
                 </div>
-                <div>
+                <div className="flex-1">
                   <h3 className="font-bold text-lg text-slate-900">{v.full_name}</h3>
                   <p className="text-slate-500 text-sm">{v.email}</p>
+                  {v.phone && (
+                    <p className="text-slate-500 text-sm">Phone: {v.phone}</p>
+                  )}
                   <div className="flex items-center gap-3 mt-2">
                     <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
                       <Clock className="w-3 h-3 mr-1" />
@@ -138,6 +169,26 @@ export default function AdminVerify() {
                       Wants to become owner
                     </span>
                   </div>
+                  {v.verification_documents && v.verification_documents.length > 0 && (
+                    <div className="mt-3 space-y-2">
+                      <p className="text-xs font-medium text-slate-600">Verification Documents:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {v.verification_documents.map((doc: string, idx: number) => (
+                          <a
+                            key={idx}
+                            href={doc}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-slate-100 hover:bg-slate-200 rounded-md transition-colors"
+                          >
+                            <FileText className="w-3 h-3" />
+                            Document {idx + 1}
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
