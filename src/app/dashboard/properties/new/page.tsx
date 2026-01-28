@@ -106,6 +106,22 @@ const propertySchema = z.object({
   state: z.string().min(1, "Please enter state"),
   pincode: z.string().min(6, "Please enter a valid pincode"),
   amenities: z.array(z.string()).optional(),
+  latitude: z.preprocess(
+    (val) => (val === "" || val === undefined ? undefined : Number(val)),
+    z
+      .number({ invalid_type_error: "Latitude must be a number" })
+      .min(-90, "Latitude must be between -90 and 90")
+      .max(90, "Latitude must be between -90 and 90")
+      .optional()
+  ),
+  longitude: z.preprocess(
+    (val) => (val === "" || val === undefined ? undefined : Number(val)),
+    z
+      .number({ invalid_type_error: "Longitude must be a number" })
+      .min(-180, "Longitude must be between -180 and 180")
+      .max(180, "Longitude must be between -180 and 180")
+      .optional()
+  ),
 });
 
 type PropertyForm = z.infer<typeof propertySchema>;
@@ -584,7 +600,7 @@ export default function NewPropertyPage() {
                     <Textarea
                       id="description"
                       placeholder="Describe your property in detail..."
-                      className="mt-2 min-h-[150px]"
+                      className="mt-2 min-h-37.5"
                       {...register("description")}
                     />
                     {errors.description && (
@@ -850,7 +866,7 @@ export default function NewPropertyPage() {
                       <Textarea
                         id="address"
                         placeholder="Enter complete address with landmarks"
-                        className="pl-10 min-h-[100px]"
+                        className="pl-10 min-h-25"
                         {...register("address")}
                       />
                     </div>
@@ -910,6 +926,43 @@ export default function NewPropertyPage() {
                       {errors.pincode && (
                         <p className="text-sm text-destructive mt-1">
                           {errors.pincode.message}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  {/* Latitude/Longitude fields */}
+                  <div className="grid sm:grid-cols-2 gap-4 mt-4">
+                    <div>
+                      <Label htmlFor="latitude">
+                        Latitude (optional, recommended)
+                      </Label>
+                      <Input
+                        id="latitude"
+                        type="number"
+                        step="any"
+                        placeholder="e.g. 12.9716"
+                        {...register("latitude")}
+                      />
+                      {errors.latitude && (
+                        <p className="text-sm text-destructive mt-1">
+                          {errors.latitude.message}
+                        </p>
+                      )}
+                    </div>
+                    <div>
+                      <Label htmlFor="longitude">
+                        Longitude (optional, recommended)
+                      </Label>
+                      <Input
+                        id="longitude"
+                        type="number"
+                        step="any"
+                        placeholder="e.g. 77.5946"
+                        {...register("longitude")}
+                      />
+                      {errors.longitude && (
+                        <p className="text-sm text-destructive mt-1">
+                          {errors.longitude.message}
                         </p>
                       )}
                     </div>
