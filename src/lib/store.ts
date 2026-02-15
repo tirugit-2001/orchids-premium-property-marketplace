@@ -48,7 +48,7 @@ export const useAuthStore = create<AuthState>()(
       }
     }),
     {
-      name: 'propvista-auth',
+      name: 'solvestay-auth',
       partialize: (state) => ({ user: state.user, subscription: state.subscription }),
     }
   )
@@ -80,7 +80,7 @@ export const useComparisonStore = create<ComparisonState>()(
       isInComparison: (id) => get().properties.some(p => p.id === id)
     }),
     {
-      name: 'propvista-comparison',
+      name: 'solvestay-comparison',
     }
   )
 )

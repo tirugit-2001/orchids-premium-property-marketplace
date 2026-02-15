@@ -18,7 +18,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
 import {
   Sheet,
   SheetContent,
@@ -356,8 +355,8 @@ function PropertiesContent() {
               Browse through {filteredProperties.length} properties across India
             </p>
 
-            <div className="flex flex-col lg:flex-row gap-4">
-              <div className="flex-1 relative">
+            <div className="flex flex-col lg:flex-row lg:flex-nowrap lg:items-center gap-3 lg:gap-4 p-4 lg:px-5 lg:py-4 rounded-xl bg-muted/30 border">
+              <div className="flex-1 min-w-0 relative">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <Input
                   placeholder="Search by location, property name..."
@@ -367,13 +366,12 @@ function PropertiesContent() {
                 />
               </div>
               {/* City Autocomplete - Custom Dropdown */}
-              <div className="w-full lg:w-56 relative">
-                <Label className="mb-1 block">City</Label>
+              <div className="w-full lg:w-44 xl:w-52 flex-shrink-0 relative">
                 <div className="relative">
                   <Input
                     type="text"
                     className="h-12 bg-background pr-10"
-                    placeholder="Type city name"
+                    placeholder="City"
                     value={selectedCity}
                     autoComplete="off"
                     onChange={async (e) => {
@@ -424,17 +422,12 @@ function PropertiesContent() {
                 </div>
               </div>
               {/* Area Autocomplete - Custom Dropdown */}
-              <div className="w-full lg:w-56 relative">
-                <Label className="mb-1 block">Area/Locality</Label>
+              <div className="w-full lg:w-44 xl:w-52 flex-shrink-0 relative">
                 <div className="relative">
                   <Input
                     type="text"
                     className="h-12 bg-background pr-10"
-                    placeholder={
-                      selectedCity
-                        ? `Type area in ${selectedCity}`
-                        : "Type area/locality"
-                    }
+                    placeholder={selectedCity ? "Area" : "Area/Locality"}
                     value={selectedArea}
                     autoComplete="off"
                     onChange={async (e) => {
@@ -490,7 +483,7 @@ function PropertiesContent() {
                 value={selectedListing}
                 onValueChange={(v) => setSelectedListing(v as ListingType)}
               >
-                <SelectTrigger className="w-full lg:w-40 h-12 bg-background">
+                <SelectTrigger className="w-full lg:w-36 xl:w-40 h-12 bg-background flex-shrink-0">
                   <SelectValue placeholder="Buy/Rent" />
                 </SelectTrigger>
                 <SelectContent>
@@ -502,7 +495,7 @@ function PropertiesContent() {
               </Select>
               <Sheet>
                 <SheetTrigger asChild>
-                  <Button variant="outline" className="h-12 gap-2">
+                  <Button variant="outline" className="h-12 gap-2 flex-shrink-0">
                     <SlidersHorizontal className="w-4 h-4" />
                     Filters
                     {activeFiltersCount > 0 && (

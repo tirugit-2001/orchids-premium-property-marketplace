@@ -24,15 +24,15 @@ import {
 const plans = [
   {
     id: 'day',
-    name: 'Day Pass',
-    price: 29,
-    period: 'day',
+    name: 'Two Day Pass',
+    price: 49,
+    period: '2 days',
     description: 'Perfect for quick property searches',
     features: [
       { text: '5 property contacts', included: true },
       { text: 'Basic search filters', included: true },
       { text: 'Chat with owners', included: true },
-      { text: '24 hours access', included: true },
+      { text: '48 hours access', included: true },
       { text: 'Save favorites', included: false },
       { text: 'Price insights', included: false },
       { text: 'Download PDFs', included: false },
@@ -43,7 +43,7 @@ const plans = [
   {
     id: 'weekly',
     name: 'Weekly Pass',
-    price: 99,
+    price: 150,
     period: 'week',
     description: 'Best for serious property hunters',
     features: [

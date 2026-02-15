@@ -128,9 +128,9 @@ function RegisterContent() {
             <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur">
               <Home className="w-6 h-6" />
             </div>
-            <span className="text-2xl font-bold">PropVista</span>
+            <span className="text-2xl font-bold">Solvestay</span>
           </Link>
-          <h1 className="text-4xl font-bold mb-4">Join PropVista</h1>
+          <h1 className="text-4xl font-bold mb-4">Join Solvestay</h1>
           <p className="text-lg text-white/80 mb-8">
             {selectedRole === "owner"
               ? "List your properties for free and connect with thousands of potential tenants and buyers."
@@ -177,7 +177,7 @@ function RegisterContent() {
             <div className="w-10 h-10 rounded-xl bg-linear-to-br from-primary to-accent flex items-center justify-center">
               <Home className="w-5 h-5 text-white" />
             </div>
-            <span className="text-xl font-bold">PropVista</span>
+            <span className="text-xl font-bold">Solvestay</span>
           </div>
 
           <h2 className="text-3xl font-bold mb-2">Create Account</h2>

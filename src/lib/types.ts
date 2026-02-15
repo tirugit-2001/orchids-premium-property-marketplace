@@ -265,17 +265,17 @@ export interface PropertyView {
 export const SUBSCRIPTION_PLANS = {
   day: { 
     id: 'day',
-    name: 'Day Pass', 
-    price: 29, 
+    name: 'Two Day Pass', 
+    price: 49, 
     contacts: 5, 
-    duration: 1,
-    description: '24 hours access',
-    features: ['5 property contacts', 'Basic search filters', 'Chat with owners', '24 hours access']
+    duration: 2,
+    description: '48 hours access',
+    features: ['5 property contacts', 'Basic search filters', 'Chat with owners', '48 hours access']
   },
   weekly: { 
     id: 'weekly',
     name: 'Weekly Pass', 
-    price: 99, 
+    price: 150, 
     contacts: 20, 
     duration: 7,
     description: '7 days access',

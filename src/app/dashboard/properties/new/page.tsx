@@ -461,7 +461,7 @@ export default function NewPropertyPage() {
           <div className="mb-8">
             <h1 className="text-3xl font-bold mb-2">List Your Property</h1>
             <p className="text-muted-foreground">
-              Fill in the details below to list your property on PropVista
+              Fill in the details below to list your property on Solvestay
             </p>
           </div>
 

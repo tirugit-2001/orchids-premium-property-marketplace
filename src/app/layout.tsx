@@ -6,7 +6,7 @@ import Script from "next/script";
 import { Toaster } from "@/components/ui/sonner";
 
 export const metadata: Metadata = {
-  title: "PropVista - Find Your Perfect Home | Zero Brokerage Property Platform",
+  title: "Solvestay - Find Your Perfect Home | Zero Brokerage Property Platform",
   description: "India's most transparent real estate platform. Find houses, apartments, PGs, land for sale, rent, or lease. Connect directly with verified property owners. No brokers, no hidden fees.",
   keywords: "property, real estate, rent, buy, sell, house, apartment, PG, land, India, zero brokerage",
 };
@@ -40,7 +40,7 @@ export default function RootLayout({
           data-include-search-params="true"
           data-only-in-iframe="true"
           data-debug="true"
-          data-custom-data='{"appName": "PropVista", "version": "1.0.0"}'
+          data-custom-data='{"appName": "Solvestay", "version": "1.0.0"}'
         />
         {children}
         <Toaster position="top-right" richColors />

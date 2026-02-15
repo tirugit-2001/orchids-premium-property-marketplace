@@ -29,9 +29,9 @@ import {
   Phone,
   CreditCard,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { CITIES } from '@/lib/types'
+import { CityCombobox } from '@/components/CityCombobox'
 
 const fadeIn = {
   hidden: { opacity: 0, y: 20 },
@@ -82,7 +82,7 @@ const features = [
   {
     icon: CreditCard,
     title: 'Affordable Plans',
-    description: 'Access owner contacts for just ₹29/day. No hidden fees or commissions.',
+    description: 'Access owner contacts for just ₹49/day. No hidden fees or commissions.',
   },
 ]
 
@@ -91,7 +91,7 @@ const testimonials = [
     name: 'Priya Sharma',
     role: 'Found 3BHK in Bangalore',
     image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
-    content: 'PropVista helped me find my dream apartment in just 3 days! The verified listings and direct owner contact saved me lakhs in brokerage.',
+    content: 'Solvestay helped me find my dream apartment in just 3 days! The verified listings and direct owner contact saved me lakhs in brokerage.',
     rating: 5,
   },
   {
@@ -105,22 +105,22 @@ const testimonials = [
     name: 'Anjali Patel',
     role: 'Rented PG in Pune',
     image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150',
-    content: 'The ₹29 day pass was perfect for me! I contacted 5 PG owners and found the perfect place near my college within hours.',
+    content: 'The two day pass was perfect for me! I contacted 5 PG owners and found the perfect place near my college within hours.',
     rating: 5,
   },
 ]
 
 const pricingPlans = [
   {
-    name: 'Day Pass',
-    price: '29',
-    period: 'day',
-    features: ['5 property contacts', 'Basic search filters', 'Chat with owners', '24 hours access'],
+    name: 'Two Day Pass',
+    price: '49',
+    period: '2 days',
+    features: ['5 property contacts', 'Basic search filters', 'Chat with owners', '48 hours access'],
     popular: false,
   },
   {
     name: 'Weekly Pass',
-    price: '99',
+    price: '150',
     period: 'week',
     features: ['20 property contacts', 'Advanced filters', 'Priority support', 'Save favorites', '7 days access'],
     popular: true,
@@ -148,10 +148,47 @@ const featuredCities = [
   { name: 'Hyderabad', image: 'https://images.unsplash.com/photo-1572445271230-a78b5944a659?w=400', properties: '6,500+' },
 ]
 
+const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || ''
+
 export default function HomePage() {
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCity, setSelectedCity] = useState('')
+  const [areaOptions, setAreaOptions] = useState<{ id: string; text: string }[]>([])
+  const [showAreaSuggestions, setShowAreaSuggestions] = useState(false)
+
+  const fetchAreaSuggestions = useCallback(
+    async (query: string) => {
+      if (!mapboxToken || !selectedCity || !query.trim()) {
+        setAreaOptions([])
+        return
+      }
+      const res = await fetch(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query + ', ' + selectedCity)}.json?types=neighborhood,locality,place&country=IN&limit=6&access_token=${mapboxToken}`
+      )
+      const data = await res.json()
+      const features = (data.features || []).map((f: { id: string; text: string }) => ({
+        id: f.id,
+        text: f.text,
+      }))
+      setAreaOptions(features)
+    },
+    [selectedCity]
+  )
+
+  useEffect(() => {
+    if (!searchQuery.trim() || !selectedCity) {
+      setAreaOptions([])
+      setShowAreaSuggestions(false)
+      return
+    }
+    const t = setTimeout(() => fetchAreaSuggestions(searchQuery), 200)
+    return () => clearTimeout(t)
+  }, [searchQuery, selectedCity, fetchAreaSuggestions])
+
+  useEffect(() => {
+    if (areaOptions.length > 0) setShowAreaSuggestions(true)
+  }, [areaOptions.length])
 
   const handleSearch = () => {
     const params = new URLSearchParams()
@@ -170,7 +207,7 @@ export default function HomePage() {
           <div className="absolute bottom-20 right-10 w-96 h-96 bg-accent/10 rounded-full blur-3xl animate-float" style={{ animationDelay: '2s' }} />
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-20 relative z-10">
+        <div className="max-w-[90rem] mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-20 relative z-10">
           <motion.div
             initial="hidden"
             animate="visible"
@@ -199,38 +236,61 @@ export default function HomePage() {
               className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto mb-10"
             >
               Connect directly with property owners. No brokers, no hidden fees.
-              Get owner contact for just <span className="text-primary font-semibold">₹29</span>.
+              Get owner contact for just <span className="text-primary font-semibold">₹49</span>.
             </motion.p>
 
             <motion.div
               variants={fadeIn}
-              className="bg-card rounded-2xl shadow-xl p-4 sm:p-6 max-w-3xl mx-auto border"
+              className="bg-card rounded-2xl shadow-xl p-4 sm:p-6 w-full max-w-[80rem] mx-auto border"
             >
-              <div className="flex flex-col sm:flex-row gap-3">
-                <div className="flex-1 relative">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
+              <div className="w-full sm:w-52 flex-shrink-0">
+                  <CityCombobox
+                    value={selectedCity}
+                    onChange={setSelectedCity}
+                    placeholder="All Cities"
+                    heightClass="h-12 sm:h-14"
+                  />
+                </div>
+                <div className="flex-1 min-w-0 relative">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground z-10" />
                   <Input
-                    placeholder="Search by location, property type..."
+                    placeholder={
+                      selectedCity
+                        ? `Search area, locality or property in ${selectedCity}`
+                        : 'Search by location, property type...'
+                    }
                     className="pl-12 h-12 sm:h-14 text-base border-0 bg-muted/50"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
+                    onFocus={() => areaOptions.length > 0 && setShowAreaSuggestions(true)}
+                    onBlur={() => setTimeout(() => setShowAreaSuggestions(false), 150)}
                     onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                   />
+                  {showAreaSuggestions && areaOptions.length > 0 && (
+                    <ul className="absolute z-20 left-0 right-0 top-full mt-1 bg-popover text-popover-foreground border border-border rounded-lg shadow-lg overflow-hidden py-1">
+                      {areaOptions.map((area) => (
+                        <li
+                          key={area.id}
+                          className="px-4 py-2.5 cursor-pointer hover:bg-accent text-sm transition-colors"
+                          onMouseDown={(e) => {
+                            e.preventDefault()
+                            setSearchQuery(area.text)
+                            setAreaOptions([])
+                            setShowAreaSuggestions(false)
+                          }}
+                        >
+                          {area.text}
+                          {selectedCity && (
+                            <span className="ml-2 text-muted-foreground text-xs">{selectedCity}</span>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
-                <div className="relative">
-                  <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground z-10" />
-                  <select
-                    className="h-12 sm:h-14 pl-12 pr-8 rounded-lg border-0 bg-muted/50 appearance-none cursor-pointer w-full sm:w-48"
-                    value={selectedCity}
-                    onChange={(e) => setSelectedCity(e.target.value)}
-                  >
-                    <option value="">All Cities</option>
-                    {CITIES.map((city) => (
-                      <option key={city} value={city}>{city}</option>
-                    ))}
-                  </select>
-                </div>
-                <Button size="lg" className="h-12 sm:h-14 px-8" onClick={handleSearch}>
+             
+                <Button size="lg" className="h-12 sm:h-14 px-8 flex-shrink-0" onClick={handleSearch}>
                   <Search className="w-5 h-5 mr-2" />
                   Search
                 </Button>
@@ -306,7 +366,7 @@ export default function HomePage() {
             className="text-center mb-16"
           >
             <motion.div variants={fadeIn}>
-              <Badge variant="outline" className="mb-4">Why Choose PropVista</Badge>
+              <Badge variant="outline" className="mb-4">Why Choose Solvestay</Badge>
             </motion.div>
             <motion.h2 variants={fadeIn} className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">
               Everything You Need to
@@ -535,7 +595,7 @@ export default function HomePage() {
               Ready to Find Your Dream Home?
             </motion.h2>
             <motion.p variants={fadeIn} className="text-xl text-primary-foreground/80 mb-10">
-              Join over 2 lakh happy customers who found their perfect property on PropVista.
+              Join over 2 lakh happy customers who found their perfect property on Solvestay.
             </motion.p>
             <motion.div variants={fadeIn} className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button asChild size="lg" variant="secondary" className="text-lg px-8">

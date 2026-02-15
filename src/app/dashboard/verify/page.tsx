@@ -235,7 +235,7 @@ export default function OwnerVerification() {
                 </div>
                 <CardTitle className="text-2xl font-bold">Owner Verification</CardTitle>
                 <CardDescription>
-                  Verify your account to start listing properties on PropVista.
+                  Verify your account to start listing properties on Solvestay.
                 </CardDescription>
               </CardHeader>
 
