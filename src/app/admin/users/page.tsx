@@ -63,11 +63,13 @@ export default function AdminUsers() {
   }
 
   async function toggleVerification(userId: string, currentStatus: boolean) {
+    // DB constraint profiles_verification_status_check only allows 'pending' | 'rejected' | null
+    // Use is_verified for verified state; set verification_status to null when verifying
     const { error } = await supabase
       .from('profiles')
       .update({ 
         is_verified: !currentStatus,
-        verification_status: !currentStatus ? 'verified' : null
+        verification_status: null
       })
       .eq('id', userId)
 

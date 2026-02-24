@@ -187,6 +187,7 @@ export default function NewPropertyPage() {
     register,
     handleSubmit,
     watch,
+    getValues,
     setValue,
     trigger,
     formState: { errors },
@@ -321,6 +322,15 @@ export default function NewPropertyPage() {
   };
 
   const nextStep = async () => {
+    // Step 1: if PG/Hostel is selected, go to dedicated PG form (no need to pick listing type)
+    if (currentStep === 1) {
+      const selectedType = getValues("property_type");
+      if (selectedType === "pg") {
+        router.push("/dashboard/properties/new/pg");
+        return;
+      }
+    }
+
     const isValid = await validateCurrentStep();
     if (!isValid) {
       toast.error("Please fill in all required fields before proceeding");

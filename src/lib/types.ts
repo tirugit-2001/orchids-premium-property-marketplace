@@ -79,6 +79,56 @@ export interface Property {
   owner?: Profile
   average_rating?: number
   review_count?: number
+  pg_details?: PgDetails | null
+}
+
+/** PG/Hostel listing – room types available */
+export type PgRoomType = 'single' | 'double' | 'three' | 'four'
+
+/** PG/Hostel – who the place is available for */
+export type PgAvailableFor = 'male' | 'female' | 'anyone'
+
+/** PG/Hostel – room-level amenities */
+export const PG_ROOM_AMENITIES = [
+  'Cupboard', 'TV', 'Bedding', 'Geyser', 'AC', 'Attached Bathroom'
+] as const
+
+/** PG/Hostel – rules (checkboxes) */
+export const PG_RULES = [
+  { id: 'no_smoking', label: 'No Smoking' },
+  { id: 'no_guardians_stay', label: 'No Guardians Stay' },
+  { id: 'no_girls_entry', label: "No Girl's Entry" },
+  { id: 'no_drinking', label: 'No Drinking' },
+  { id: 'no_non_veg', label: 'No Non-Veg' },
+] as const
+
+/** PG/Hostel – common/facility amenities */
+export const PG_COMMON_AMENITIES = [
+  { id: 'common_tv', label: 'Common TV' },
+  { id: 'mess', label: 'Mess' },
+  { id: 'lift', label: 'Lift' },
+  { id: 'refrigerator', label: 'Refrigerator' },
+  { id: 'wifi', label: 'Wifi' },
+  { id: 'cooking_allowed', label: 'Cooking Allowed' },
+  { id: 'power_backup', label: 'Power Backup' },
+] as const
+
+export const PG_PARKING_TYPES = ['None', 'Two Wheeler', 'Four Wheeler', 'Both'] as const
+
+export interface PgDetails {
+  room_types: PgRoomType[]
+  room_amenities: string[]
+  available_for: PgAvailableFor
+  preferred_guests: string | null
+  food_included: boolean
+  rules: string[]
+  gate_closing_time: string | null
+  laundry: boolean
+  room_cleaning: boolean
+  warden_facility: boolean
+  directions: string | null
+  common_amenities: string[]
+  parking_type: string | null
 }
 
 export type SubscriptionPlan = 'day' | 'weekly' | 'monthly'

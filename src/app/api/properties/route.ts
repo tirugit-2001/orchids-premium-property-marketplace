@@ -179,6 +179,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Prepare insert data - always include images_360 (even if empty array)
+    // property_type "pg" may include pg_details (JSONB) for PG/Hostel-specific fields
     const insertData: any = {
       ...propertyData,
       owner_id: user_id,
@@ -206,27 +207,35 @@ export async function POST(request: NextRequest) {
       .select()
       .single();
 
-    // If error is about missing column, provide helpful error message
+    // If error is about missing column (e.g. images_360, pg_details), provide helpful error message
     if (
       error &&
       (error.message?.includes("images_360") ||
+        error.message?.includes("pg_details") ||
         error.message?.includes("column") ||
         error.code === "PGRST116")
     ) {
       console.error(
-        "❌ Database error - images_360 column missing:",
+        "❌ Database error (missing column):",
         error.message
       );
-      console.error(
-        "💡 Please add the images_360 column to your properties table:"
-      );
-      console.error(
-        "   ALTER TABLE properties ADD COLUMN images_360 TEXT[] DEFAULT '{}';"
-      );
+      if (error.message?.includes("pg_details")) {
+        console.error(
+          "💡 For PG/Hostel listings, add: ALTER TABLE properties ADD COLUMN IF NOT EXISTS pg_details JSONB DEFAULT NULL;"
+        );
+      }
+      if (error.message?.includes("images_360")) {
+        console.error(
+          "💡 Add: ALTER TABLE properties ADD COLUMN images_360 TEXT[] DEFAULT '{}';"
+        );
+      }
 
-      // Try without images_360 as fallback
-      const { images_360, ...dataWithout360 } = insertData;
-      const retryData = { ...dataWithout360 };
+      // Try without images_360 and/or pg_details as fallback
+      const { images_360, pg_details, ...rest } = insertData;
+      const retryData: any = { ...rest };
+      if (!error.message?.includes("images_360")) retryData.images_360 = insertData.images_360;
+      if (!error.message?.includes("pg_details") && insertData.pg_details != null)
+        retryData.pg_details = insertData.pg_details;
 
       console.warn("⚠️ Retrying without images_360 column...");
       const retryResult = await supabase

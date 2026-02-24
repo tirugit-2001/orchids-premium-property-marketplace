@@ -31,7 +31,18 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import Image from "next/image";
+import { toast } from "sonner";
 
 const statusConfig = {
   approved: {
@@ -61,6 +72,8 @@ export default function MyPropertiesPage() {
   const [userLocation, setUserLocation] = useState<[number, number] | null>(
     null
   );
+  const [propertyToDelete, setPropertyToDelete] = useState<Property | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const hasActiveSubscription = useAuthStore((s: any) =>
     s.hasActiveSubscription()
   );
